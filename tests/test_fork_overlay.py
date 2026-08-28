@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -123,7 +124,7 @@ def test_link_checker_skips_product_readme_and_scans_review() -> None:
     assert "NOTICE.md" in rels
     assert "SECURITY.md" in rels
     assert "CONTRIBUTING.md" in rels
-    assert "CONTRIBUTING.zh-CN.md" not in rels
+    assert "CONTRIBUTING.zh-CN.md" in rels
     assert "docs/fork/DECISIONS.md" in rels
 
 
@@ -146,12 +147,14 @@ def test_agents_overlay_points_at_fork_rules() -> None:
     assert claude.strip() != "@AGENTS.md"
     assert "Workspace Shape" in agents
     assert "pnpm -F @html-anything/next" in agents
+    assert "REVIEW.md" in agents
 
 
 def test_product_ci_is_not_official_repo_only() -> None:
     ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
     assert "pnpm exec tsx scripts/guard.ts" in ci
     assert "pnpm -F @html-anything/e2e test" in ci
+    assert "persist-credentials: false" in ci
     assert f"github.repository == '{OFFICIAL_REPO}'" not in ci
 
 
@@ -201,6 +204,9 @@ def test_gitignore_covers_overlay_and_secrets() -> None:
     assert ".env*" in text
     assert ".venv/" in text
     assert "/next/.next/" in text
+    assert "cookies.txt" in text
+    assert "cookies.json" in text
+    assert "credentials.json" in text
 
 
 def test_claude_md_is_a_regular_file() -> None:
@@ -221,3 +227,26 @@ def test_issue_templates_point_to_upstream_product() -> None:
     )
     assert OFFICIAL_REPO in config
     assert "blank_issues_enabled: false" in config
+    assert f"{FORK_REPO}/blob/main/CONTRIBUTING.md" in config
+
+
+def test_no_tracked_git_symlinks() -> None:
+    result = subprocess.run(
+        ["git", "ls-files", "-s"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    for line in result.stdout.splitlines():
+        mode = line.split(None, 1)[0]
+        assert mode != "120000", line
+
+
+def test_zh_cn_contributing_uses_workspace_paths() -> None:
+    zh_cn = (ROOT / "CONTRIBUTING.zh-CN.md").read_text(encoding="utf-8")
+
+    assert "next/src/lib/templates/skills/" in zh_cn
+    assert "next/src/lib/agents/argv.ts" in zh_cn
+    assert "](src/" not in zh_cn
+    assert "`src/lib/" not in zh_cn

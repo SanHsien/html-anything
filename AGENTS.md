@@ -2,6 +2,7 @@
 > 本 fork 的維護規則以 [`FORK.md`](FORK.md) 為準；與下文衝突時以 FORK.md 優先。開發與驗收細節見 [`docs/fork/DEVELOPMENT.md`](docs/fork/DEVELOPMENT.md)。
 > 不要推 `upstream`、不要對上游開 PR（除非維護者在這次對話明確同意回貢）、不要把本 fork 包裝成官方產品站。
 > 產品行為（Next app、skill 模板、agent adapter、e2e）仍遵守下文上游規則。根目錄 `README.md` 必須保持上游英文產品說明。
+> [`REVIEW.md`](REVIEW.md) 是風險快照，不是每個一般 bug 的流水帳。
 >
 > **對外只打本 fork：** `gh` 在 fork clone 的預設 repo 就是上游。每個 clone 先跑 `gh repo set-default SanHsien/html-anything`。開 PR 仍明寫 `--repo SanHsien/html-anything`，並讀輸出 URL，owner 必須是 `SanHsien`。
 

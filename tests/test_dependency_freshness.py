@@ -53,3 +53,6 @@ def test_requirements_dev_declares_pytest_and_ruff() -> None:
     packages = checker.load_direct_dependencies()
     names = {package["name"] for package in packages}
     assert names == {"pytest", "ruff"}
+    by_name = {package["name"]: package for package in packages}
+    assert by_name["pytest"]["minimum"] == "9.1"
+    assert by_name["pytest"]["requirement"] == "pytest>=9.1"

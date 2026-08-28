@@ -10,6 +10,19 @@
 
 ---
 
+## 2026-08-28（全庫審查與 overlay 修正）
+
+### 變更
+
+- **重寫 `REVIEW.md`。** 寫入 GitHub Actions URL、CodeQL 32 筆 open 告警分類、skill 目錄實數 81、以及可修項落地結果。
+- **`pytest>=9.1`。** 解掉 dependency-freshness 對 pytest 8 下限的紅燈；本線 CI 是 Python 3.14。
+- **產品 `ci.yml` checkout 加 `persist-credentials: false`。** 不改 `guard.ts` 核對的 pnpm 指令字串。
+- **`CONTRIBUTING.zh-CN.md` 路徑改 `next/src/`。** 簡中檔不再指向會撞 `guard.ts` 的根目錄 `src/`。
+
+本輪不回貢。
+
+---
+
 ## 2026-08-28（建立 Windows-first 維護型 fork）
 
 ### 新增

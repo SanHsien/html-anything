@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """檢查本 fork overlay 文件之間的相對連結。
 
-只驗 overlay 文件與 docs/fork/。不掃根目錄 README.md／README.zh-CN.md：那是上游產品契約。
-也不掃 CONTRIBUTING.zh-CN.md：上游簡體檔仍寫 `src/lib/...`，與現行 `next/src/` 布局不一致，屬產品文件債務，不在 overlay 裡改。
+只驗 overlay 文件、docs/fork/ 與已對齊 `next/src/` 的 CONTRIBUTING.zh-CN.md。
+不掃根目錄 README.md／README.zh-CN.md：那是上游產品契約。
 
     python tools/check_links.py
 """
@@ -31,6 +31,7 @@ FORK_DOCUMENTS = [
     ROOT / "CLAUDE.md",
     ROOT / "SECURITY.md",
     ROOT / "CONTRIBUTING.md",
+    ROOT / "CONTRIBUTING.zh-CN.md",
     ROOT / "CODE_OF_CONDUCT.md",
     ROOT / "CHANGELOG.md",
     ROOT / "CHANGELOG.en.md",

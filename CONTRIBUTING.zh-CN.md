@@ -14,10 +14,10 @@
 
 | 你想做什么 | 你其实是在加 | 文件位置 | 体积 |
 |---|---|---|---|
-| 让 HTML Anything 渲染一种新作品（发票、招聘启事、iOS 设置页…） | 一个 **Skill** | [`src/lib/templates/skills/<your-skill>/`](src/lib/templates/skills/) | 一个文件夹，约 3 个文件 |
-| 接入一个新的 coding-agent CLI | 一个 **Agent adapter** | [`src/lib/agents/argv.ts`](src/lib/agents/argv.ts) + [`src/lib/agents/detect.ts`](src/lib/agents/detect.ts) | 一个数组里加 10 行 |
-| 加一个新的发布目标（视频号、抖音字幕、Notion …） | 一个 **Export adapter** | [`src/components/drafts-menu.tsx`](src/components/drafts-menu.tsx) + `src/lib/export/` 下的 helper | 一个组件 + 一个 helper |
-| 加功能、修 bug、重构流式 parser | 代码 | `src/app/`, `src/lib/`, `src/components/` | 常规 PR |
+| 让 HTML Anything 渲染一种新作品（发票、招聘启事、iOS 设置页…） | 一个 **Skill** | [`next/src/lib/templates/skills/<your-skill>/`](next/src/lib/templates/skills/) | 一个文件夹，约 3 个文件 |
+| 接入一个新的 coding-agent CLI | 一个 **Agent adapter** | [`next/src/lib/agents/argv.ts`](next/src/lib/agents/argv.ts) + [`next/src/lib/agents/detect.ts`](next/src/lib/agents/detect.ts) | 一个数组里加 10 行 |
+| 加一个新的发布目标（视频号、抖音字幕、Notion …） | 一个 **Export adapter** | [`next/src/components/drafts-menu.tsx`](next/src/components/drafts-menu.tsx) + `next/src/lib/export/` 下的 helper | 一个组件 + 一个 helper |
+| 加功能、修 bug、重构流式 parser | 代码 | `next/src/app/`, `next/src/lib/`, `next/src/components/` | 常规 PR |
 | 改文档、把某一段翻译到另一种语言、修错别字 | 文档 | `README.md`, `README.zh-CN.md`, 本文 | 一个 PR |
 
 不确定自己的想法属于哪一类？[先开个 issue](https://github.com/nexu-io/html-anything/issues/new)，我们帮你定位到对应的目录。
@@ -44,12 +44,12 @@ push 之前请确保你**至少有一个 coding-agent CLI 登录好了**（`clau
 
 ## 加一个新的 Skill
 
-skill 是 [`src/lib/templates/skills/`](src/lib/templates/skills/) 下的一个文件夹，根目录有 `SKILL.md`，遵循 Claude Code 的 [`SKILL.md` 约定][skill] + 我们的扩展 frontmatter（picker 会读这部分）。**不需要在任何地方注册。** 把文件夹放进去，重启 `pnpm dev`，picker 里就出现了。
+skill 是 [`next/src/lib/templates/skills/`](next/src/lib/templates/skills/) 下的一个文件夹，根目录有 `SKILL.md`，遵循 Claude Code 的 [`SKILL.md` 约定][skill] + 我们的扩展 frontmatter（picker 会读这部分）。**不需要在任何地方注册。** 把文件夹放进去，重启 `pnpm dev`，picker 里就出现了。
 
 ### Skill 目录结构
 
 ```text
-src/lib/templates/skills/your-skill/
+next/src/lib/templates/skills/your-skill/
 ├── SKILL.md            # 必需 —— 提示词正文 + frontmatter
 ├── example.html        # 必需 —— 你希望 agent 产出什么样的成品，手写一份
 ├── assets/             # 可选 —— 字体、图片、可复用 CSS、布局片段
@@ -105,7 +105,7 @@ example_prompt: |
 3. **硬约束写得具体。** "用现代字体" 不是约束。真正的约束长这样："Inter 96 / 64 / 40 / 24 / 16 px 字号梯度，8px 网格，每页最多两个字重"。
 4. **example 里不许有 `lorem ipsum`**。要用占位数据，也得是看起来像真的占位数据。
 5. **slug 用小写 + 连字符** —— `deck-swiss-international`、`social-x-post-card`。和已有的 75 个文件夹保持一致。
-6. **vendor 进来的作品，必须保留原始 `LICENSE` 和署名**。比如 [`src/lib/templates/skills/deck-guizang-editorial/`](src/lib/templates/skills/deck-guizang-editorial/) 完整保留了 op7418 的 LICENSE 和署名。
+6. **vendor 进来的作品，必须保留原始 `LICENSE` 和署名**。比如 [`next/src/lib/templates/skills/deck-guizang-editorial/`](next/src/lib/templates/skills/deck-guizang-editorial/) 完整保留了 op7418 的 LICENSE 和署名。
 
 ### picker 分组规则
 
@@ -118,7 +118,7 @@ picker 用两个维度组织 skill。**优先用已有的取值**，只有当你
 
 ## 加一个新的 coding-agent CLI
 
-接入新 agent（比如某家的 `foo-coder` CLI），就在 [`src/lib/agents/argv.ts`](src/lib/agents/argv.ts) 加一行：
+接入新 agent（比如某家的 `foo-coder` CLI），就在 [`next/src/lib/agents/argv.ts`](next/src/lib/agents/argv.ts) 加一行：
 
 ```ts
 {
@@ -134,7 +134,7 @@ picker 用两个维度组织 skill。**优先用已有的取值**，只有当你
 }
 ```
 
-完事。`/api/agents` 会在 `PATH` 上扫到它，顶栏 picker 会出现，chat 流程走同一条 SSE 管道。如果这个 CLI 输出**有类型的事件**（比如 Claude Code 的 `--output-format stream-json`），在 [`src/lib/agents/invoke.ts`](src/lib/agents/invoke.ts) 加 parser，把 `stream` 设成 `'claude-stream-json'`。
+完事。`/api/agents` 会在 `PATH` 上扫到它，顶栏 picker 会出现，chat 流程走同一条 SSE 管道。如果这个 CLI 输出**有类型的事件**（比如 Claude Code 的 `--output-format stream-json`），在 [`next/src/lib/agents/invoke.ts`](next/src/lib/agents/invoke.ts) 加 parser，把 `stream` 设成 `'claude-stream-json'`。
 
 ### Agent adapter PR 合并标准
 
@@ -147,7 +147,7 @@ picker 用两个维度组织 skill。**优先用已有的取值**，只有当你
 
 ## 加一个新的发布目标
 
-发布目标分两块：`src/lib/export/` 下的 helper 负责产出字节（`.html` 的字符串、`.png` 的 Blob、粘贴的 `ClipboardItem`），[`src/components/drafts-menu.tsx`](src/components/drafts-menu.tsx) 里加一个菜单项把它接进 UI。
+发布目标分两块：`next/src/lib/export/` 下的 helper 负责产出字节（`.html` 的字符串、`.png` 的 Blob、粘贴的 `ClipboardItem`），[`next/src/components/drafts-menu.tsx`](next/src/components/drafts-menu.tsx) 里加一个菜单项把它接进 UI。
 
 ### Export PR 合并标准
 
@@ -167,7 +167,7 @@ picker 用两个维度组织 skill。**优先用已有的取值**，只有当你
 此外：
 
 - **不要复读。** `// import the module`、`// loop through items` 之类的注释是噪音。只在代码无法表达的"为什么"上写注释。
-- **`src/` 下用 TypeScript。** 没特别理由不要新增顶层 `.js` 文件。
+- **`next/src/` 下用 TypeScript。** 没特别理由不要新增顶层 `.js` 文件。
 - **新增顶层依赖**要在 PR 描述里写一段"我们得到了什么 vs 我们打包多了多少字节"。[`package.json`](package.json) 的依赖列表是有意保持小的。
 - **push 前跑一次 `pnpm build`**。类型错会卡 merge。
 
@@ -237,6 +237,6 @@ prompt 栈相关的 bug（"agent 输出了紫色渐变 hero，`SKILL.md` 里明�
 
 参与贡献即代表你同意：你的贡献以本仓库的 [Apache-2.0 License](LICENSE) 授权。
 
-vendor 进来的第三方作品保留**原始** LICENSE 与署名 —— 每个 `src/lib/templates/skills/<skill>/` 文件夹里的 `LICENSE` / `README.md` 以它为准。最明显的例子是 [`src/lib/templates/skills/deck-guizang-editorial/`](src/lib/templates/skills/deck-guizang-editorial/)，完整保留了 [op7418](https://github.com/op7418) 的原始 LICENSE 与署名。
+vendor 进来的第三方作品保留**原始** LICENSE 与署名 —— 每个 `next/src/lib/templates/skills/<skill>/` 文件夹里的 `LICENSE` / `README.md` 以它为准。最明显的例子是 [`next/src/lib/templates/skills/deck-guizang-editorial/`](next/src/lib/templates/skills/deck-guizang-editorial/)，完整保留了 [op7418](https://github.com/op7418) 的原始 LICENSE 与署名。
 
 [skill]: https://docs.anthropic.com/en/docs/claude-code/skills

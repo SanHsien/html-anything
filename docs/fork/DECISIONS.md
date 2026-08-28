@@ -44,6 +44,18 @@
 
 **理由**：本輪目標是開發環境。open PR（截至 #144）與 open issue 下次做上游審查時從最小編號開始看。
 
+## 2026-08-28：審查輪 overlay 修正
+
+**決定**：修本線能改、且不碰產品契約字串的項：`pytest>=9.1`、Issue 模板補本 fork CONTRIBUTING、gitignore 點名 cookie／憑證檔、測試禁止 tracked symlink、產品 `ci.yml` 加 `persist-credentials: false`、`CONTRIBUTING.zh-CN.md` 路徑改 `next/src/`。CodeQL 告警與 iframe sandbox 不在 overlay 清。
+
+**理由**：dependency-freshness 已對 pytest 8 下限紅燈；簡中 CONTRIBUTING 的 `src/` 會讓跟著走的人撞 `guard.ts`。產品 spawn／預覽模型是上游取捨，改它等於改產品安全契約，需要回貢授權。
+
+**限制**：
+
+- 不 pin 產品 `ci.yml` 的 action 版本。
+- 不關閉、不「處理」CodeQL 32 筆 alert。
+- 不推進 `reviewed_pr_through`／`reviewed_issue_through`。
+
 ## 2026-08-28：不修 Windows symlink 單元測試
 
 **決定**：接受 `install-rejections.test.ts` 在未開 Developer Mode 的 Windows 上 `fs.symlink` EPERM。overlay gate 不跑 vitest。
