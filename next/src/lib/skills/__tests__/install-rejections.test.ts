@@ -3,6 +3,8 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { isCodeloadHost, isGitHubApiHost, isGitHubReposApi } from "./github-request";
+import { buildGzipUstar } from "./ustar";
 import { installFromGitHub, InstallError } from "../install";
 import { listPackages } from "../registry";
 import { userSkillsDir } from "../paths";
@@ -46,14 +48,13 @@ async function tarGzDir(dir: string, outPath: string): Promise<void> {
 
 function fakeFetch(tarball: Buffer | null, opts: { defaultBranch?: string; tarballStatus?: number } = {}): typeof fetch {
   return (async (input: RequestInfo | URL) => {
-    const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
-    if (url.includes("api.github.com/repos/")) {
+    if (isGitHubReposApi(input)) {
       return new Response(JSON.stringify({ default_branch: opts.defaultBranch ?? "main" }), {
         status: 200,
         headers: { "content-type": "application/json" },
       });
     }
-    if (url.includes("codeload.github.com")) {
+    if (isCodeloadHost(input)) {
       if (opts.tarballStatus && opts.tarballStatus !== 200) {
         return new Response("not found", { status: opts.tarballStatus });
       }
@@ -124,14 +125,15 @@ describe("install rejections", () => {
   });
 
   it("rejects a tarball containing a SKILL.md symlink", async () => {
-    const tar = await buildTarballWith("syml-deadbeef", async (w) => {
-      // Drop a real target and a SKILL.md symlinked to it. The preflight
-      // rejects every non-file/non-directory entry up front so the symlink
-      // never reaches the extractor — `forbidden_entry_type` fires before
-      // the post-extract `symlink_rejected` defense ever has to.
-      await fs.writeFile(path.join(w, "target.md"), VALID_SKILL_MD, "utf8");
-      await fs.symlink("target.md", path.join(w, "SKILL.md"));
-    });
+    // Hand-roll ustar: Windows without Developer Mode cannot create OS
+    // symlinks, and system `tar -czf` will not emit a typeFlag-2 entry
+    // from a regular file.
+    const payload = Buffer.from(VALID_SKILL_MD, "utf8");
+    const tar = buildGzipUstar([
+      { name: "syml-deadbeef/", size: 0, typeFlag: "5" },
+      { name: "syml-deadbeef/target.md", size: payload.length, typeFlag: "0", data: payload },
+      { name: "syml-deadbeef/SKILL.md", size: 0, typeFlag: "2", linkName: "target.md" },
+    ]);
     await expect(
       installFromGitHub("owner/syml", { fetchImpl: fakeFetch(tar) }),
     ).rejects.toMatchObject({ code: "forbidden_entry_type" });
@@ -163,11 +165,10 @@ describe("install rejections", () => {
       await fs.writeFile(path.join(w, "SKILL.md"), VALID_SKILL_MD, "utf8");
     });
     const flaky: typeof fetch = (async (input: RequestInfo | URL) => {
-      const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
-      if (url.includes("api.github.com")) {
+      if (isGitHubApiHost(input)) {
         return new Response("nope", { status: 500 });
       }
-      if (url.includes("codeload.github.com")) {
+      if (isCodeloadHost(input)) {
         return new Response(new Uint8Array(tar), { status: 200 });
       }
       return new Response("", { status: 404 });

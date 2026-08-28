@@ -36,6 +36,10 @@ function slug(s: string, fallback: string): string {
   return out || fallback;
 }
 
+function escapeAttr(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+}
+
 const pad = (n: number) => String(n).padStart(2, "0");
 
 /** ms → frames at FPS (rounded, minimum 1 frame). */
@@ -59,8 +63,8 @@ function buildFrameHtml(parsed: HyperframesParsed, frame: HyperFrame): string {
 `.trim();
 
   const bodyAttrs = [
-    parsed.bodyClass ? `class="${parsed.bodyClass}"` : "",
-    parsed.bodyStyle ? `style="${parsed.bodyStyle}"` : "",
+    parsed.bodyClass ? `class="${escapeAttr(parsed.bodyClass)}"` : "",
+    parsed.bodyStyle ? `style="${escapeAttr(parsed.bodyStyle)}"` : "",
   ]
     .filter(Boolean)
     .join(" ");

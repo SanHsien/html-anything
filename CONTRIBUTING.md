@@ -7,6 +7,14 @@
 > ```powershell
 > git clone https://github.com/SanHsien/html-anything.git
 > ```
+>
+> 根目錄 `package.json` 沒有 scripts。本線開發請用：
+>
+> ```powershell
+> pnpm install --frozen-lockfile
+> pnpm -F @html-anything/next dev
+> pnpm -F @html-anything/next build
+> ```
 
 Thanks for thinking about contributing. HTML Anything is small on purpose — most of the value lives in **files** (skill folders, prompt fragments, agent adapters) rather than framework code. The highest-leverage contributions are usually one folder, one Markdown file, or a ten-line adapter.
 
@@ -111,7 +119,7 @@ example_prompt: |
 2. **The example renders in the browser** (`pnpm dev` → pick the skill → ⌘+Enter → screenshot). Attach the screenshot to the PR.
 3. **Hard constraints exist and are specific.** Vague directives ("use modern typography") are not constraints. Real ones look like "Inter 96 / 64 / 40 / 24 / 16 px, 8 px grid, max two weights per slide".
 4. **No `lorem ipsum`** anywhere in the example. If the example uses placeholder data, it must be plausibly-real placeholder data.
-5. **Slug uses ASCII lowercase with dashes** — `deck-swiss-international`, `social-x-post-card`. Mirror the 75 existing folders.
+5. **Slug uses ASCII lowercase with dashes** — `deck-swiss-international`, `social-x-post-card`. Mirror the 81 existing folders.
 6. **If you vendored work from another repo**, the original `LICENSE` and authorship attribution have to ship inside your skill folder. Example: `next/src/lib/templates/skills/deck-guizang-editorial/LICENSE` preserves the original op7418 license verbatim.
 
 ### Picker grouping

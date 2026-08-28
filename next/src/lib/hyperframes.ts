@@ -62,8 +62,13 @@ function pick(re: RegExp, src: string): string {
 }
 
 function stripTags(s: string): string {
-  return s
-    .replace(/<[^>]+>/g, " ")
+  let out = s;
+  for (let i = 0; i < 8; i++) {
+    const next = out.replace(/<[^>]*>/g, " ");
+    if (next === out) break;
+    out = next;
+  }
+  return out
     .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")

@@ -254,7 +254,7 @@ function escapeMd(s: string): string {
   // false link match. Line-starting block markers (#, >, -, +, digits.) are
   // handled separately in `escapeBlockStarts` so they only escape at the
   // position where they would actually trigger a block construct.
-  return s.replace(/([\\`*_~[\]])/g, "\\$1");
+  return s.replace(/\\/g, "\\\\").replace(/([`*_~[\]])/g, "\\$1");
 }
 
 /**

@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { isCodeloadHost, isGitHubReposApi } from "./github-request";
 
 /**
  * Exercise the Next.js route handlers directly. We mock the underlying
@@ -69,11 +70,10 @@ async function buildOkTarball(): Promise<Buffer> {
 
 function stubFetch(tarball: Buffer): void {
   globalThis.fetch = (async (input: RequestInfo | URL) => {
-    const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
-    if (url.includes("api.github.com/repos/")) {
+    if (isGitHubReposApi(input)) {
       return new Response(JSON.stringify({ default_branch: "main" }), { status: 200 });
     }
-    if (url.includes("codeload.github.com")) {
+    if (isCodeloadHost(input)) {
       return new Response(new Uint8Array(tarball), { status: 200 });
     }
     return new Response("not found", { status: 404 });

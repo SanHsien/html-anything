@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { parsePackageId, parseSkillId } from "@/lib/skills/paths";
 import { findUserSkill, listUserSkills, type UserSkillEntry } from "@/lib/skills/registry";
 
 /**
@@ -210,13 +211,11 @@ function isValidBundledId(id: string): boolean {
 }
 
 function isValidSkillId(id: string): boolean {
-  // Bundled ids stay strictly kebab-case. Marketplace ids are namespaced as
-  // `pkg-<owner>__<repo>--<originalId>` — `__` shows up inside the package id
-  // segment, so we allow it (plus `.` for tag-like refs) before the `--`.
-  return (
-    isValidBundledId(id) ||
-    /^pkg-[a-z0-9][a-z0-9._-]*__[a-z0-9][a-z0-9._-]*--[a-z0-9][a-z0-9._-]*$/i.test(id)
-  );
+  if (isValidBundledId(id)) return true;
+  const parsed = parseSkillId(id);
+  if (!parsed) return false;
+  if (!parsePackageId(parsed.pkgId)) return false;
+  return /^[a-z0-9][a-z0-9._-]*$/i.test(parsed.originalId);
 }
 
 function loadSkillFromDir(id: string, dir: string): LoadedSkill | null {

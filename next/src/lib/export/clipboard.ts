@@ -78,11 +78,23 @@ function copySafari(html: string, plain: string): Promise<void> {
 }
 
 function stripTags(html: string): string {
-  if (typeof DOMParser === "undefined") return html;
-  try {
-    const doc = new DOMParser().parseFromString(html, "text/html");
-    return doc.body.textContent ?? "";
-  } catch {
-    return html.replace(/<[^>]+>/g, "");
+  if (typeof DOMParser !== "undefined") {
+    try {
+      const doc = new DOMParser().parseFromString(html, "text/html");
+      return doc.body.textContent ?? "";
+    } catch {
+      // fall through to the regex fallback
+    }
   }
+  return stripTagsFallback(html);
+}
+
+function stripTagsFallback(html: string): string {
+  let out = html;
+  for (let i = 0; i < 8; i++) {
+    const next = out.replace(/<[^>]*>/g, "");
+    if (next === out) return out;
+    out = next;
+  }
+  return out;
 }

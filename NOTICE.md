@@ -25,7 +25,7 @@ When redistributing this project or substantial parts of it:
 
 ## Project Scope
 
-This repository ships a local-first agentic HTML editor: a Next.js app that reuses coding-agent CLIs already on `PATH`, 75 skill templates, sandboxed preview, and one-click export to HTML / PNG / WeChat / X / Zhihu. It is a maintenance fork, not a second official product site.
+This repository ships a local-first agentic HTML editor: a Next.js app that reuses coding-agent CLIs already on `PATH`, 81 skill templates, sandboxed preview, and one-click export to HTML / PNG / WeChat / X / Zhihu. It is a maintenance fork, not a second official product site.
 
 It does not include API keys, CLI session credentials, or user-generated HTML / PNG artifacts. Do not commit `.env*` files or credentials.
 

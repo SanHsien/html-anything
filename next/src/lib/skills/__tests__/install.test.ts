@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { isCodeloadHost, isGitHubReposApi } from "./github-request";
 import { installFromGitHub, uninstallPackage, InstallError } from "../install";
 import { listPackages, listUserSkills, readPackageManifest } from "../registry";
 import { userSkillsDir, makeSkillId } from "../paths";
@@ -83,14 +84,13 @@ async function buildMultiSkillFixture(workDir: string): Promise<Fixture> {
 
 function fakeFetch(tarballBytes: Buffer): typeof fetch {
   return (async (input: RequestInfo | URL) => {
-    const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
-    if (url.includes("api.github.com/repos/")) {
+    if (isGitHubReposApi(input)) {
       return new Response(JSON.stringify({ default_branch: "main" }), {
         status: 200,
         headers: { "content-type": "application/json" },
       });
     }
-    if (url.includes("codeload.github.com")) {
+    if (isCodeloadHost(input)) {
       return new Response(new Uint8Array(tarballBytes), {
         status: 200,
         headers: { "content-type": "application/gzip" },

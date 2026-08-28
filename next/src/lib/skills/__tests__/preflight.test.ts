@@ -4,6 +4,8 @@ import os from "node:os";
 import path from "node:path";
 import zlib from "node:zlib";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { isCodeloadHost, isGitHubReposApi } from "./github-request";
+import { buildGzipUstar } from "./ustar";
 import { installFromGitHub } from "../install";
 import { listPackages } from "../registry";
 
@@ -17,65 +19,12 @@ import { listPackages } from "../registry";
  * (POSIX ustar 512-byte header format) and gzip them.
  */
 
-type TarEntry = {
-  name: string;
-  size: number;
-  typeFlag: string;
-  linkName?: string;
-  data?: Buffer;
-};
-
-function octal(n: number, width: number): Buffer {
-  // POSIX tar octal fields: ASCII octal digits, NUL-terminated, padded with
-  // zeros on the left.
-  const s = n.toString(8).padStart(width - 1, "0");
-  return Buffer.from(`${s}\0`, "binary");
-}
-
-function header(entry: TarEntry): Buffer {
-  const h = Buffer.alloc(512);
-  h.write(entry.name.slice(0, 100), 0, "utf8");
-  octal(0o644, 8).copy(h, 100); // mode
-  octal(0, 8).copy(h, 108); // uid
-  octal(0, 8).copy(h, 116); // gid
-  octal(entry.size, 12).copy(h, 124); // size
-  octal(0, 12).copy(h, 136); // mtime
-  // checksum field is initially spaces while we compute the checksum
-  h.fill(0x20, 148, 156);
-  h.write(entry.typeFlag, 156, "binary");
-  if (entry.linkName) h.write(entry.linkName.slice(0, 100), 157, "utf8");
-  h.write("ustar\0", 257, "binary");
-  h.write("00", 263, "binary");
-  // checksum = sum of unsigned bytes of header with checksum field as spaces
-  let sum = 0;
-  for (const b of h) sum += b;
-  octal(sum, 7).copy(h, 148);
-  h[155] = 0x20; // trailing space per spec
-  return h;
-}
-
-function buildTarball(entries: TarEntry[]): Buffer {
-  const blocks: Buffer[] = [];
-  for (const e of entries) {
-    blocks.push(header(e));
-    if (e.data && e.data.length > 0) {
-      blocks.push(e.data);
-      const pad = (512 - (e.data.length % 512)) % 512;
-      if (pad > 0) blocks.push(Buffer.alloc(pad));
-    }
-  }
-  blocks.push(Buffer.alloc(512));
-  blocks.push(Buffer.alloc(512));
-  return zlib.gzipSync(Buffer.concat(blocks));
-}
-
 function fakeFetchWithTarball(tarball: Buffer): typeof fetch {
   return (async (input: RequestInfo | URL) => {
-    const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
-    if (url.includes("api.github.com/repos/")) {
+    if (isGitHubReposApi(input)) {
       return new Response(JSON.stringify({ default_branch: "main" }), { status: 200 });
     }
-    if (url.includes("codeload.github.com")) {
+    if (isCodeloadHost(input)) {
       return new Response(new Uint8Array(tarball), { status: 200 });
     }
     return new Response("not found", { status: 404 });
@@ -96,7 +45,7 @@ afterEach(async () => {
 
 describe("tarball preflight", () => {
   it("rejects hardlink entries (typeFlag 1) — the system tar would otherwise resolve the link target", async () => {
-    const tar = buildTarball([
+    const tar = buildGzipUstar([
       { name: "wrapper/", size: 0, typeFlag: "5" },
       { name: "wrapper/target", size: 4, typeFlag: "0", data: Buffer.from("data") },
       { name: "wrapper/SKILL.md", size: 0, typeFlag: "1", linkName: "wrapper/target" },
@@ -108,7 +57,7 @@ describe("tarball preflight", () => {
   });
 
   it("rejects entries with absolute paths", async () => {
-    const tar = buildTarball([
+    const tar = buildGzipUstar([
       { name: "/etc/passwd", size: 4, typeFlag: "0", data: Buffer.from("data") },
     ]);
     await expect(
@@ -118,7 +67,7 @@ describe("tarball preflight", () => {
   });
 
   it("rejects entries containing '..' segments", async () => {
-    const tar = buildTarball([
+    const tar = buildGzipUstar([
       { name: "wrapper/../escape", size: 4, typeFlag: "0", data: Buffer.from("data") },
     ]);
     await expect(

@@ -10,6 +10,20 @@
 
 ---
 
+## 2026-08-28（審查可修項落地）
+
+### 變更
+
+- **Windows vitest symlink。** `install-rejections.test.ts` 改用手搓 ustar，不再 `fs.symlink`。
+- **CONTRIBUTING overlay** 寫明 `pnpm -F @html-anything/next`；簡中 export 列對齊 `export-menu.tsx`。
+- **產品 `ci.yml` pin** `actions/checkout` 與 `setup-node` 的 SHA（仍不改 `guard.ts` 核對的 pnpm 字串）。
+- **marketplace skill id** 改走 `parseSkillId`／`parsePackageId`，避開單一 regex ReDoS。
+- **stripTags／屬性跳脫** 收斂 CodeQL 指出的不完整消毒路徑。
+
+本輪不回貢。
+
+---
+
 ## 2026-08-28（全庫審查與 overlay 修正）
 
 ### 變更

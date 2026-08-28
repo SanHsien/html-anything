@@ -5,7 +5,7 @@
 
 ## 為什麼維護 fork
 
-- 保留上游持續更新的 agentic HTML 編輯器、75 套 skill 模板、本地 CLI 偵測與一鍵匯出。
+- 保留上游持續更新的 agentic HTML 編輯器、81 套 skill 模板、本地 CLI 偵測與一鍵匯出。
 - 採 Windows-first 維護：Windows 11 + PowerShell 是主要開發、除錯與完整 overlay 驗收環境。
 - 繁中維護規則放 `FORK.md`；根目錄 `README.md` 必須保持上游英文產品說明（產品契約與 `scripts/guard.ts` 不掃 README，但仍是公開入口）。
 - 建立可重現的 Windows fork gate、fork CI，以及逐筆審查的上游追蹤。

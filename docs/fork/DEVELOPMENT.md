@@ -69,7 +69,7 @@ pnpm -F @html-anything/next dev
 
 CONTRIBUTING 裡的 `pnpm dev`／`pnpm build` 是上游文件；根目錄 `package.json` 依 `guard.ts` **不得**定義 scripts。請用上面的 `-F` 過濾器。簡中 `CONTRIBUTING.zh-CN.md` 的產品路徑已對齊 `next/src/`；英文版維持上游正文，只加開頭 overlay。
 
-Windows 本機 `pnpm -F @html-anything/next test` 目前會有 **1** 筆失敗：`install-rejections.test.ts` 對暫存目錄做 `fs.symlink`，未開 Developer Mode 時得到 `EPERM`。Ubuntu 產品 CI 不受影響。不要為了讓本機全綠就改產品測試；那是上游契約。
+Windows 本機 `pnpm -F @html-anything/next test` 的 symlink 案例改用手搓 ustar，不再呼叫 `fs.symlink`。Ubuntu 產品 CI 仍覆蓋同一條 preflight。
 
 ## 不要做的事
 

@@ -1,6 +1,14 @@
 # 为 HTML Anything 贡献代码
 
 > **SanHsien 维护型 fork。** 本线 overlay／Windows gate／文件问题打到 [`SanHsien/html-anything`](https://github.com/SanHsien/html-anything)。产品行为（skills、agent adapters、export、Next app）的贡献请去上游 [`nexu-io/html-anything`](https://github.com/nexu-io/html-anything)。维护规则见 [`FORK.md`](FORK.md)。
+>
+> 根目录 `package.json` 没有 scripts。本线开发请用：
+>
+> ```powershell
+> git clone https://github.com/SanHsien/html-anything.git
+> pnpm install --frozen-lockfile
+> pnpm -F @html-anything/next dev
+> ```
 
 谢谢你愿意贡献。HTML Anything 是一个故意保持小的项目 —— 大部分价值都在**文件**里（skill 文件夹、提示词片段、agent adapter），而不在框架代码里。回报率最高的贡献，通常是一个文件夹、一个 Markdown 文件，或者十行 adapter。
 
@@ -16,7 +24,7 @@
 |---|---|---|---|
 | 让 HTML Anything 渲染一种新作品（发票、招聘启事、iOS 设置页…） | 一个 **Skill** | [`next/src/lib/templates/skills/<your-skill>/`](next/src/lib/templates/skills/) | 一个文件夹，约 3 个文件 |
 | 接入一个新的 coding-agent CLI | 一个 **Agent adapter** | [`next/src/lib/agents/argv.ts`](next/src/lib/agents/argv.ts) + [`next/src/lib/agents/detect.ts`](next/src/lib/agents/detect.ts) | 一个数组里加 10 行 |
-| 加一个新的发布目标（视频号、抖音字幕、Notion …） | 一个 **Export adapter** | [`next/src/components/drafts-menu.tsx`](next/src/components/drafts-menu.tsx) + `next/src/lib/export/` 下的 helper | 一个组件 + 一个 helper |
+| 加一个新的发布目标（视频号、抖音字幕、Notion …） | 一个 **Export adapter** | [`next/src/components/export-menu.tsx`](next/src/components/export-menu.tsx) + `next/src/lib/export/` 下的 helper | 一个组件 + 一个 helper |
 | 加功能、修 bug、重构流式 parser | 代码 | `next/src/app/`, `next/src/lib/`, `next/src/components/` | 常规 PR |
 | 改文档、把某一段翻译到另一种语言、修错别字 | 文档 | `README.md`, `README.zh-CN.md`, 本文 | 一个 PR |
 
@@ -104,7 +112,7 @@ example_prompt: |
 2. **`example.html` 能在浏览器里渲染**（`pnpm dev` → 选这个 skill → ⌘+Enter → 截图）。截图附 PR。
 3. **硬约束写得具体。** "用现代字体" 不是约束。真正的约束长这样："Inter 96 / 64 / 40 / 24 / 16 px 字号梯度，8px 网格，每页最多两个字重"。
 4. **example 里不许有 `lorem ipsum`**。要用占位数据，也得是看起来像真的占位数据。
-5. **slug 用小写 + 连字符** —— `deck-swiss-international`、`social-x-post-card`。和已有的 75 个文件夹保持一致。
+5. **slug 用小写 + 连字符** —— `deck-swiss-international`、`social-x-post-card`。和已有的 81 个文件夹保持一致。
 6. **vendor 进来的作品，必须保留原始 `LICENSE` 和署名**。比如 [`next/src/lib/templates/skills/deck-guizang-editorial/`](next/src/lib/templates/skills/deck-guizang-editorial/) 完整保留了 op7418 的 LICENSE 和署名。
 
 ### picker 分组规则
@@ -147,7 +155,7 @@ picker 用两个维度组织 skill。**优先用已有的取值**，只有当你
 
 ## 加一个新的发布目标
 
-发布目标分两块：`next/src/lib/export/` 下的 helper 负责产出字节（`.html` 的字符串、`.png` 的 Blob、粘贴的 `ClipboardItem`），[`next/src/components/drafts-menu.tsx`](next/src/components/drafts-menu.tsx) 里加一个菜单项把它接进 UI。
+发布目标分两块：`next/src/lib/export/` 下的 helper 负责产出字节（`.html` 的字符串、`.png` 的 Blob、粘贴的 `ClipboardItem`），[`next/src/components/export-menu.tsx`](next/src/components/export-menu.tsx) 里加一个菜单项把它接进 UI。
 
 ### Export PR 合并标准
 

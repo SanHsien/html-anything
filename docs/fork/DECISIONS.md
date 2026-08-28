@@ -30,6 +30,8 @@
 
 **決定**：上游 `ci.yml` 維持 `actions/checkout@v4` 與 `actions/setup-node@v4`。overlay workflows 自己 pin SHA。
 
+**後續**：同日「審查可修項落地」已 pin 這兩個 action 的 SHA；`guard.ts` 核對的 pnpm 字串未改。
+
 **理由**：`scripts/guard.ts` 把 `ci.yml` 裡的產品指令當契約。改 pin 不是這次 overlay 的範圍；交給 Dependabot。
 
 ## 2026-08-28：fork gate 不跑 Playwright
@@ -44,6 +46,17 @@
 
 **理由**：本輪目標是開發環境。open PR（截至 #144）與 open issue 下次做上游審查時從最小編號開始看。
 
+## 2026-08-28：審查可修項落地（不回貢）
+
+**決定**：在本 fork 修完 REVIEW 裡還能改、且不改產品信任模型的項：Windows symlink 測試改 ustar、CONTRIBUTING overlay 寫 `pnpm -F`、簡中 export-menu 對齊、overlay 文件 skill 數改 81、產品 `ci.yml` pin action SHA、marketplace id 驗證改拆解而非單一 regex、stripTags 迴圈、屬性跳脫。不送上游。
+
+**理由**：主人這次對話要求「可修的都修、先不考慮回貢」。spawn CLI、iframe `allow-scripts allow-same-origin`、英文 README 行銷數字仍屬產品契約，維持不改。
+
+**限制**：
+
+- 不翻英文 README、不把 Playwright 放進 overlay gate、不合併未讀的上游 #131。
+- 不關閉 GitHub CodeQL alert（修碼後等下次掃描）。
+
 ## 2026-08-28：審查輪 overlay 修正
 
 **決定**：修本線能改、且不碰產品契約字串的項：`pytest>=9.1`、Issue 模板補本 fork CONTRIBUTING、gitignore 點名 cookie／憑證檔、測試禁止 tracked symlink、產品 `ci.yml` 加 `persist-credentials: false`、`CONTRIBUTING.zh-CN.md` 路徑改 `next/src/`。CodeQL 告警與 iframe sandbox 不在 overlay 清。
@@ -56,8 +69,12 @@
 - 不關閉、不「處理」CodeQL 32 筆 alert。
 - 不推進 `reviewed_pr_through`／`reviewed_issue_through`。
 
+**後續**：同日「審查可修項落地」已 pin 產品 `ci.yml` 的 checkout／setup-node SHA；pnpm 指令字串仍不動。
+
 ## 2026-08-28：不修 Windows symlink 單元測試
 
 **決定**：接受 `install-rejections.test.ts` 在未開 Developer Mode 的 Windows 上 `fs.symlink` EPERM。overlay gate 不跑 vitest。
+
+**後續**：2026-08-28「審查可修項落地」已改用手搓 ustar，不再呼叫 `fs.symlink`。
 
 **理由**：這是產品測試對 Unix symlink 的假設，不是 overlay 能最小修的範圍。Ubuntu `ci.yml` 仍覆蓋該案例。若要修，應送回上游並在當次對話取得回貢同意。

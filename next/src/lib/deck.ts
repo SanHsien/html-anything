@@ -48,6 +48,10 @@ function pick(re: RegExp, src: string): string {
   return m ? m[1] : "";
 }
 
+function escapeAttr(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+}
+
 function decodeEntities(s: string): string {
   return s
     .replace(/&amp;/g, "&")
@@ -58,7 +62,13 @@ function decodeEntities(s: string): string {
 }
 
 function stripTags(s: string): string {
-  return decodeEntities(s.replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+  let out = s;
+  for (let i = 0; i < 8; i++) {
+    const next = out.replace(/<[^>]*>/g, " ");
+    if (next === out) break;
+    out = next;
+  }
+  return decodeEntities(out).replace(/\s+/g, " ").trim();
 }
 
 function extractAttr(tag: string, name: string): string {
@@ -121,7 +131,7 @@ export function parseDeck(fullHtml: string): DeckParsed {
   body { display:flex; align-items:center; justify-content:center; min-height:100vh; }
   .slide { transform-origin: center center !important; }
 </style></head>` +
-      `<body class="${bodyClass}" style="${bodyStyle}">${slideForRender}</body></html>`;
+      `<body class="${escapeAttr(bodyClass)}" style="${escapeAttr(bodyStyle)}">${slideForRender}</body></html>`;
 
     slides.push({
       html: standalone,

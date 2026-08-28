@@ -28,7 +28,7 @@ export function packageId(owner: string, repo: string): string {
 /** Reverse of {@link packageId}: split `owner__repo` back into its parts. */
 export function parsePackageId(id: string): { owner: string; repo: string } | null {
   const idx = id.indexOf("__");
-  if (idx < 1 || idx === id.length - 2) return null;
+  if (idx === -1 || idx < 1 || idx === id.length - 2) return null;
   return { owner: id.slice(0, idx), repo: id.slice(idx + 2) };
 }
 

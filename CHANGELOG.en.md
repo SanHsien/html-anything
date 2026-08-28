@@ -11,6 +11,20 @@ Per-commit adopt/skip reasoning is recorded in [`docs/fork/DECISIONS.md`](docs/f
 
 ---
 
+## 2026-08-28 (land remaining review remediations)
+
+### Changed
+
+- **Windows vitest symlink.** `install-rejections.test.ts` now packs a hand-rolled ustar instead of calling `fs.symlink`.
+- **CONTRIBUTING overlay** documents `pnpm -F @html-anything/next`; Simplified Chinese export docs point at `export-menu.tsx`.
+- **Product `ci.yml` pins** `actions/checkout` and `setup-node` SHAs (pnpm command strings that `guard.ts` checks are unchanged).
+- **Marketplace skill ids** validate via `parseSkillId` / `parsePackageId` instead of one polynomial regex.
+- **stripTags / attribute escaping** tighten the incomplete sanitization paths CodeQL flagged.
+
+This pass does not contribute back upstream.
+
+---
+
 ## 2026-08-28 (full-repo review and overlay fixes)
 
 ### Changed

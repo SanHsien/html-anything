@@ -155,6 +155,9 @@ def test_product_ci_is_not_official_repo_only() -> None:
     assert "pnpm exec tsx scripts/guard.ts" in ci
     assert "pnpm -F @html-anything/e2e test" in ci
     assert "persist-credentials: false" in ci
+    assert "actions/checkout@11d5960a326750d5838078e36cf38b85af677262" in ci
+    assert "actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020" in ci
+    assert "uses: actions/checkout@v4" not in ci
     assert f"github.repository == '{OFFICIAL_REPO}'" not in ci
 
 
@@ -179,6 +182,7 @@ def test_security_and_contributing_name_the_fork() -> None:
     assert FORK_REPO in contributing
     assert "FORK.md" in security
     assert "FORK.md" in contributing
+    assert "pnpm -F @html-anything/next dev" in contributing
     assert f"{OFFICIAL_REPO}/security/advisories/new" in security
 
 
@@ -230,6 +234,18 @@ def test_issue_templates_point_to_upstream_product() -> None:
     assert f"{FORK_REPO}/blob/main/CONTRIBUTING.md" in config
 
 
+def test_overlay_docs_use_the_counted_skill_total() -> None:
+    fork = (ROOT / "FORK.md").read_text(encoding="utf-8")
+    notice = (ROOT / "NOTICE.md").read_text(encoding="utf-8")
+    rejections = (
+        ROOT / "next" / "src" / "lib" / "skills" / "__tests__" / "install-rejections.test.ts"
+    ).read_text(encoding="utf-8")
+
+    assert "81 套 skill" in fork
+    assert "81 skill templates" in notice
+    assert "await fs.symlink" not in rejections
+
+
 def test_no_tracked_git_symlinks() -> None:
     result = subprocess.run(
         ["git", "ls-files", "-s"],
@@ -248,5 +264,8 @@ def test_zh_cn_contributing_uses_workspace_paths() -> None:
 
     assert "next/src/lib/templates/skills/" in zh_cn
     assert "next/src/lib/agents/argv.ts" in zh_cn
+    assert "export-menu.tsx" in zh_cn
+    assert "drafts-menu.tsx" not in zh_cn
     assert "](src/" not in zh_cn
     assert "`src/lib/" not in zh_cn
+    assert "pnpm -F @html-anything/next dev" in zh_cn
