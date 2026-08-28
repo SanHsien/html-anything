@@ -1,5 +1,7 @@
 # HTML Anything
 
+> **SanHsien 维护型 fork。** 产品说明以下文上游简体中文为准。繁中维护规则见 [`FORK.md`](FORK.md)；本轮审查见 [`REVIEW.md`](REVIEW.md)。`origin` 是 [`SanHsien/html-anything`](https://github.com/SanHsien/html-anything)，`upstream` 是 [`nexu-io/html-anything`](https://github.com/nexu-io/html-anything)。
+
 <p align="center"><sub>来自 <a href="https://github.com/nexu-io/open-design"><b>Open Design</b></a> 团队 —— <b>40k★ · 200+ 贡献者</b>,更生产级、迭代更快。html-anything 是聚焦在 agent 时代 HTML 编辑器这一刀的专项; 如果你喜欢这个味道, 同一拨人做的 <a href="https://github.com/nexu-io/open-design">Open Design</a> 是它在更大规模上的形态, 顺手也看看。</sub></p>
 
 <p align="center"><b>项目主页:</b> <a href="https://open-design.ai/html-anything/"><b>open-design.ai/html-anything/</b></a> —— 不用 clone 也能先看看 HTML Anything 长什么样、能干啥。</p>
@@ -29,7 +31,7 @@
   <a href="https://github.com/nexu-io/open-design"><img alt="基于 open-design" src="https://img.shields.io/badge/built%20on-nexu--io%2Fopen--design-ff7043?style=flat-square&logo=github&logoColor=white" /></a>
 </p>
 
-<p align="center"><a href="README.md">English</a> · <b>简体中文</b></p>
+<p align="center"><a href="README.md">English</a> · <b>简体中文</b> · <a href="FORK.md">繁體中文（本 fork）</a></p>
 
 ---
 

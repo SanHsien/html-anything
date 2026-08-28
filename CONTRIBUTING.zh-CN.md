@@ -1,5 +1,7 @@
 # 为 HTML Anything 贡献代码
 
+> **SanHsien 维护型 fork。** 本线 overlay／Windows gate／文件问题打到 [`SanHsien/html-anything`](https://github.com/SanHsien/html-anything)。产品行为（skills、agent adapters、export、Next app）的贡献请去上游 [`nexu-io/html-anything`](https://github.com/nexu-io/html-anything)。维护规则见 [`FORK.md`](FORK.md)。
+
 谢谢你愿意贡献。HTML Anything 是一个故意保持小的项目 —— 大部分价值都在**文件**里（skill 文件夹、提示词片段、agent adapter），而不在框架代码里。回报率最高的贡献，通常是一个文件夹、一个 Markdown 文件，或者十行 adapter。
 
 这份指南告诉你：每种贡献该放在哪个目录，PR 在合并前要过哪些线。

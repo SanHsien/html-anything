@@ -1,5 +1,13 @@
 # Contributing to HTML Anything
 
+> **SanHsien 維護型 fork。** 本線的 overlay／Windows gate／文件問題打到 [`SanHsien/html-anything`](https://github.com/SanHsien/html-anything)。產品行為（skills、agent adapters、export、Next app）的貢獻請去上游 [`nexu-io/html-anything`](https://github.com/nexu-io/html-anything)。維護規則見 [`FORK.md`](FORK.md)。
+>
+> 本線 clone：
+>
+> ```powershell
+> git clone https://github.com/SanHsien/html-anything.git
+> ```
+
 Thanks for thinking about contributing. HTML Anything is small on purpose — most of the value lives in **files** (skill folders, prompt fragments, agent adapters) rather than framework code. The highest-leverage contributions are usually one folder, one Markdown file, or a ten-line adapter.
 
 This guide tells you exactly where to look for each type of contribution and what bar a PR has to clear before we merge.

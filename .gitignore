@@ -51,3 +51,12 @@ next-env.d.ts
 
 # claude code
 .claude-sessions/
+
+# fork overlay (Python maintenance tools)
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.py[cod]
+upstream-review-report.md
+dependency-freshness-report.md

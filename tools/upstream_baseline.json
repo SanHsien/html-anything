@@ -1,0 +1,7 @@
+{
+  "repo": "https://github.com/nexu-io/html-anything.git",
+  "branch": "main",
+  "reviewed_through": "c31204544230578ac814026fecc153c6e36587ae",
+  "reviewed_date": "2026-08-28",
+  "notes": "Fork starting point. Overlay-only setup; open upstream PRs and issues were not triaged in this pass."
+}
