@@ -41,3 +41,25 @@ README 衝突的解法：保留頂部 overlay，把上游新產品說明留在�
 之後的上游 commit 才需要進入審查清冊。
 
 建置當下 GitHub 上已有 open PR（最高編號 144）與 open issue。**本輪沒有逐筆讀那些 diff**，所以 baseline 不寫 PR／issue watermark。下次上游審查從現有 open items 開始，不要假設「編號比 144 小的都已看過」。
+
+
+## 2026-08-29：PR 與 issue 面向真的接上排程（水位仍刻意留空）
+
+在此之前，本檔寫著「四個面向都要看」，但 `tools/check_upstream_updates.py` 只讀
+`reviewed_through`——PR 與 issue 沒有任何程式在看，每週的排程報告卻是綠的。那不是「查過沒發現」，
+是根本沒查。
+
+已補上（比照 `SanHsien/harness-guard`）：
+
+- 用 `gh <pr|issue> list --state all` 列出水位以上的項目。`--state all` 是刻意的：**開了又關、
+  沒有合併**的 PR 永遠不會出現在 commit 軸上，而那正是「上游拒收、但可能對本 fork 有價值」的一類。
+- `gh` 無法列舉時回 `None` 而不是 `[]`，報告寫「Not checked」並 **fail closed**（exit 2）。
+  「沒查到」和「沒有」在綠色報告裡長得一樣，只有一個是真的。
+- `upstream-check.yml` 補 `GH_TOKEN: ${{ github.token }}`。少了它，`gh` 在 Actions 裡沒有憑證，
+  紅燈的意思會變成「檢查器壞了」而不是「上游有東西」。
+
+**`reviewed_pr_through` 與 `reviewed_issue_through` 仍然不寫。** 那個 triage 真的還沒做；補上數字
+等於把未分類的待辦洗成已審查，正是這份紀錄要防的事。缺欄位＝水位 0，所以排程的第一次執行會把整份
+待辦清單列進 step summary——**那份清單就是後續 triage 的工作單，這支檢查會是紅的直到做完為止。**
+
+2026-08-29 實查：PR 76 筆（最高 `#145`）、issue 62 筆（最高 `#141`）。

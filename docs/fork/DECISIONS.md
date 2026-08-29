@@ -78,3 +78,19 @@
 **後續**：2026-08-28「審查可修項落地」已改用手搓 ustar，不再呼叫 `fs.symlink`。
 
 **理由**：這是產品測試對 Unix symlink 的假設，不是 overlay 能最小修的範圍。Ubuntu `ci.yml` 仍覆蓋該案例。若要修，應送回上游並在當次對話取得回貢同意。
+
+
+## 2026-08-29：上游檢查補上 PR 與 issue 兩個面向
+
+**決定**：`tools/check_upstream_updates.py` 補上以 `--state all` 收集上游 PR／issue 的邏輯，
+`upstream-check.yml` 補 `GH_TOKEN: ${{ github.token }}`，並新增 `tests/test_upstream_updates.py`。
+**不**補 `reviewed_pr_through`／`reviewed_issue_through`。
+
+**理由**：`docs/fork/UPSTREAM.md` 早就寫著「四個面向都要看」，但檢查器只讀 commit 水位，PR／issue
+沒有程式在看，排程報告卻是綠的。把收集補上，那兩個面向才真的被排程檢查。水位不補，是因為 triage
+真的還沒做——寫上數字會把未分類的待辦洗成已審查。
+
+**代價（已知且刻意）**：缺水位＝0，所以每週的 upstream-check 會列出整份上游 PR／issue 清單並回
+exit 1，在 triage 做完之前這支檢查是紅的。這是真實狀態，不是故障。
+
+**觸發條件**：做完初次 triage、逐筆理由寫進本檔之後，才把水位寫進 baseline，紅燈才會消失。
