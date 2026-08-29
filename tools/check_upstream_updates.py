@@ -139,6 +139,11 @@ def collect_new_tickets(baseline: dict, kind: str) -> list[dict] | None:
         capture_output=True,
         text=True,
         encoding="utf-8",
+        # `errors` is not optional here. Ticket titles are written by strangers
+        # and the console this runs on is not always UTF-8; without it a single
+        # undecodable byte raises UnicodeDecodeError and the whole upstream
+        # check dies instead of reporting the tickets it did read.
+        errors="replace",
     )
     if result.returncode != 0:
         return None
