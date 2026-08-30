@@ -94,3 +94,47 @@
 exit 1，在 triage 做完之前這支檢查是紅的。這是真實狀態，不是故障。
 
 **觸發條件**：做完初次 triage、逐筆理由寫進本檔之後，才把水位寫進 baseline，紅燈才會消失。
+
+
+## 2026-08-30：初次上游 triage 完成，三個面向水位一起落地
+
+先前 baseline 刻意留空 PR／issue 水位（「真的還沒逐筆讀」）。本輪做完。
+
+### commit 軸：已在上游 tip
+
+`c3120454` 之後上游 **0 個新 commit**，本 fork 就在 `upstream/main` 的 tip 上。
+
+### 本 fork 與別的 overlay-only fork 不同：它有分歧的產品程式碼
+
+`git diff refs/upstream-check/main HEAD` 顯示本 fork 動過 **14 個 `next/src/lib/` 底下的產品檔**
+（`deck.ts`、`hyperframes.ts`、`export/*`、`skills/*`、`templates/loader.ts`）。所以
+`diagram-design` 那套「產品碼與上游相同，被拒收的 PR 不可能在修本 fork 的缺陷」的結構性論證
+**在這裡不成立**——必須逐筆對照。
+
+### PR 軸：76 筆，水位推進到 145
+
+| 分類 | 筆數 | 判定 |
+| --- | --- | --- |
+| MERGED | 36 | 已在 `upstream/main`，而本 fork 就在 tip 上，內容已在 |
+| OPEN | 27 | 還不是上游狀態；本 fork 只在自己痛的時候才提前引用 |
+| **CLOSED 未合併** | **13** | 逐筆比對與本 fork **分歧檔**的重疊，見下 |
+
+13 筆裡有 **10 筆與本 fork 改過的檔零重疊**（`#25`／`#41`／`#42`／`#45` 是 DeployControl 的
+無限重繪、`#51`／`#90`／`#92` 是 Codex／OpenCode 輸出管線、`#75`／`#80` 是 CLI 工具、`#124`
+是文件潤飾）。本 fork 沒有動那些檔，上游也拒收了，沒有可引用的內容。
+
+有重疊的三筆逐一查過：
+
+| PR | 重疊檔 | 判定與證據 |
+| --- | --- | --- |
+| `#119` preserve zero data-duration | `hyperframes.ts` | **已涵蓋**。上游改以 `#118`／`#120` 合併，本 fork 在 tip 上所以已有。實查本 fork：`parseOptionalDuration` 用 `Number.isFinite` 所以 `0` 會通過，取值用 `meta?.duration ?? dataDur ?? marker.duration ?? 3000`（`??` 不是 `||`，`0` 不會被吃掉），而且 `__tests__/hyperframes.test.ts` 有三條 issue #110 的回歸測試 |
+| `#106` restore i18n localization with English default | `templates/loader.ts` | **不引用**。它把 `${meta.zhName} 示例` 改成 `${meta.enName} Example`，也就是把預設語言改成英文。上游拒收；本 fork 是繁中維護線、預設中文正是想要的。本 fork 對同一檔的改動是 skill-id 驗證強化，與此無關、不衝突 |
+| `#127` server-backed project workflow | `deck.ts` | **不引用**。60 檔的功能提案（把專案流程改成後端支撐），上游未採納。本 fork 對 `deck.ts` 的改動是 12 行的 `escapeAttr`／`stripTags` 強化，與該提案無關。引用一個 60 檔的未採納架構變更，會讓本 fork 背上一條上游不維護的分支 |
+
+**觸發條件**：`#106` — 本 fork 哪天要做英文介面時重評；`#127` — 上游採納或本 fork 需要後端流程時。
+
+### issue 軸
+
+上游 issue 是產品的功能請求與使用問題（Hermes 支援、WSL agent 偵測、PPT 匯出、
+中文使用回報等）。本 fork 的分歧只在上述 14 個檔，這些 issue 都不落在那些檔的行為上；
+真正成立的缺陷修正會經由 commit 軸抵達。

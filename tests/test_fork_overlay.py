@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -30,7 +31,10 @@ def test_baseline_file_is_valid_and_complete() -> None:
     assert baseline["repo"].endswith("html-anything.git")
     assert baseline["branch"] == "main"
     assert len(baseline["reviewed_through"]) == 40
-    assert baseline["reviewed_date"] == "2026-08-28"
+    # Pinned as a shape, not as a literal. A hardcoded date turns every
+    # legitimate upstream review into a test failure, and the pressure is then
+    # to edit the test rather than to record the review.
+    assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", baseline["reviewed_date"])
 
 
 def test_workflow_is_scheduled_and_fails_on_unreviewed_commits() -> None:
@@ -87,8 +91,11 @@ def test_baseline_matches_decisions_record() -> None:
 
     assert baseline["reviewed_date"] in decisions
     assert baseline["reviewed_through"][:7] in upstream
-    assert "reviewed_pr_through" not in baseline
-    assert "reviewed_issue_through" not in baseline
+    # The 2026-08-30 triage filled these in, so the assertion flips: all four
+    # axes carry a number. Zero stays legitimate -- it means the axis was
+    # queried and was empty -- so presence and type are what get pinned.
+    assert isinstance(baseline["reviewed_pr_through"], int)
+    assert isinstance(baseline["reviewed_issue_through"], int)
 
 
 def test_overlay_markdown_links_resolve() -> None:

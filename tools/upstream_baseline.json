@@ -2,8 +2,9 @@
   "repo": "https://github.com/nexu-io/html-anything.git",
   "branch": "main",
   "reviewed_through": "c31204544230578ac814026fecc153c6e36587ae",
-  "reviewed_date": "2026-08-28",
+  "reviewed_date": "2026-08-30",
   "decision_log": "docs/fork/DECISIONS.md",
-  "notes": "Fork starting point. Overlay-only setup; open upstream PRs and issues were not triaged in this pass. 2026-08-29：檢查器原本只讀 commit 水位，PR/issue 兩個面向根本沒有程式在看，報告卻長得跟查過一樣綠。已補上 --state all 的 PR/issue 收集與 fail-closed（比照 harness-guard）。PR／issue 水位刻意不寫：真的還沒逐筆讀過，寫上去等於把未分類的待辦洗成已審查。缺欄位＝水位 0，所以排程的第一次執行會把整份待辦清單列進 step summary，那份清單就是後續 triage 的工作單。",
-  "outstanding": "上游 PR 與 issue 的初次 triage 尚未執行（2026-08-29 實查：PR 76 筆最高 #145、issue 62 筆最高 #141）。做完再寫 reviewed_pr_through / reviewed_issue_through。"
+  "notes": "Fork starting point. 2026-08-30：初次 triage 完成。commit 軸 0 筆新增（本 fork 在 upstream tip）。PR 水位 → 145、issue → 141。本 fork 有分歧產品碼（14 個 next/src/lib/ 檔），所以逐筆比對而非套用結構性論證：13 筆關閉未合併裡 10 筆與分歧檔零重疊；#119 已涵蓋（本 fork 用 ?? 不是 ||，且有三條 issue #110 回歸測試）、#106 不引用（把預設語言改英文，本 fork 是繁中維護線）、#127 不引用（60 檔未採納架構提案）。逐項證據見 docs/fork/DECISIONS.md 同日條目。",
+  "reviewed_pr_through": 145,
+  "reviewed_issue_through": 141
 }
