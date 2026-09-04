@@ -328,14 +328,20 @@ async function copyValidatedSkill(src: DiscoveredSkill, destDir: string): Promis
   // SKILL.md is mandatory and capped.
   const skillMdPath = path.join(src.sourceDir, "SKILL.md");
   await assertNoSymlink(skillMdPath);
-  const skillMdStat = await fs.stat(skillMdPath);
-  if (skillMdStat.size > SKILL_MD_MAX_BYTES) {
-    throw new InstallError(
-      "skill_md_too_large",
-      `${src.originalId}/SKILL.md is ${skillMdStat.size} bytes (cap ${SKILL_MD_MAX_BYTES})`,
-    );
+  const skillMdHandle = await fs.open(skillMdPath, "r");
+  let raw: string;
+  try {
+    const skillMdStat = await skillMdHandle.stat();
+    if (skillMdStat.size > SKILL_MD_MAX_BYTES) {
+      throw new InstallError(
+        "skill_md_too_large",
+        `${src.originalId}/SKILL.md is ${skillMdStat.size} bytes (cap ${SKILL_MD_MAX_BYTES})`,
+      );
+    }
+    raw = await skillMdHandle.readFile("utf8");
+  } finally {
+    await skillMdHandle.close();
   }
-  const raw = await fs.readFile(skillMdPath, "utf8");
   // Cheap frontmatter sanity check — full parse happens at load time, but we
   // reject obviously broken files up front so the picker doesn't show ghost
   // entries.
@@ -492,4 +498,3 @@ export async function uninstallPackage(pkgId: string): Promise<boolean> {
   await fs.rm(targetDir, { recursive: true, force: true });
   return true;
 }
-

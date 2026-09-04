@@ -91,6 +91,16 @@ describe("parseHyperframes", () => {
     expect(result.frames[1].duration).toBe(1000);
     expect(result.frames[2].duration).toBe(3000);
   });
+
+  it("decodes only one layer of title entities", () => {
+    const result = parseHyperframes(`
+      <html>
+        <head><title>&amp;lt;script&amp;gt;</title></head>
+        <body><section class="frame"><p>Frame</p></section></body>
+      </html>
+    `);
+    expect(result.title).toBe("&lt;script&gt;");
+  });
 });
 
 describe("isHyperframes", () => {

@@ -82,7 +82,7 @@
   const pager = document.getElementById('pager');
   const body = document.body;
   function lineCharLen(chunks) {
-    const CJK = /[　-〿㐀-䶿一-鿿豈-﫿＀-￯]/;
+    const CJK = /[　-〿㐀-﫿＀-￯]/;
     return chunks.reduce((acc, c) => {
       let len = 0;
       for (const ch of (c.t || '')) len += CJK.test(ch) ? 1.8 : 1;
