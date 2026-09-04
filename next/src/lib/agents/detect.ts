@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";
 import path, { delimiter, join } from "node:path";
+import crossSpawn from "cross-spawn";
 
 /**
  * Per-agent invocation protocol. Determines what `invokeAgent` does with the
@@ -381,16 +382,19 @@ export async function resolveOpenclawAgentId(bin: string): Promise<string> {
   }
   let resolved = "main";
   try {
-    const { spawn } = await import("node:child_process");
     const out = await new Promise<string>((res, rej) => {
-      const useShell = process.platform === "win32";
-      const child = spawn(useShell ? `"${bin}"` : bin, ["agents", "list"], {
+      const child = crossSpawn(bin, ["agents", "list"], {
         stdio: ["ignore", "pipe", "pipe"],
-        shell: useShell,
+        shell: false,
       });
+      const stdout = child.stdout;
+      if (!stdout) {
+        rej(new Error("openclaw agents list stdout unavailable"));
+        return;
+      }
       let buf = "";
-      child.stdout.setEncoding("utf8");
-      child.stdout.on("data", (c) => (buf += c));
+      stdout.setEncoding("utf8");
+      stdout.on("data", (c) => (buf += c));
       child.on("close", () => res(buf));
       child.on("error", rej);
       setTimeout(() => {

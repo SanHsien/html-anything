@@ -1071,6 +1071,7 @@ strong { font-weight: 500; }
           don't come through a message — chiefly the bridge's
           restoreInitialSlide path, which calls setActive() directly. */
   addEventListener('message', function (e) {
+    if (e.origin !== window.location.origin || e.source !== window.parent) return;
     var data = e && e.data;
     if (!data || data.type !== 'od:slide') return;
     if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();

@@ -1,5 +1,6 @@
-import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
+import type { ChildProcessWithoutNullStreams } from "node:child_process";
 import { existsSync } from "node:fs";
+import crossSpawn from "cross-spawn";
 import { resolveOnPath, resolveOpenclawAgentId, AGENTS } from "./detect";
 import { buildArgv, envFor, makeParser, UnsupportedAgentProtocolError } from "./argv";
 
@@ -158,21 +159,19 @@ export function invokeAgent(opts: InvokeOpts): ReadableStream<InvokeEvent> {
       if (promptViaMessageFlag) argv = [...argv, "--message", opts.prompt];
 
       try {
-        // On Windows, `spawn` cannot launch a `.cmd` / `.bat` shim (which is
-        // what npm installs for most CLI agents) without going through the
-        // shell. Without this, every agent invocation fails with
-        // EINVAL / "spawn 无效的参数". macOS/Linux use direct exec.
-        // Safety: prompt content is delivered via stdin or `--message
-        // <text>` (argv-message), not interpolated into a shell command,
-        // so this does not introduce a shell-injection vector.
-        const useShell = process.platform === "win32";
-        child = spawn(useShell ? `"${bin}"` : bin!, argv, {
+        // cross-spawn resolves Windows .cmd/.bat shims without placing the
+        // prompt or other argv values in a command shell.
+        const spawned = crossSpawn(bin!, argv, {
           cwd: opts.cwd ?? process.cwd(),
           env,
           stdio: ["pipe", "pipe", "pipe"],
-          shell: useShell,
+          shell: false,
           windowsVerbatimArguments: false,
         });
+        if (!spawned.stdin || !spawned.stdout || !spawned.stderr) {
+          throw new Error("agent process stdio unavailable");
+        }
+        child = spawned as ChildProcessWithoutNullStreams;
       } catch (err) {
         safeEnqueue({
           type: "error",
@@ -189,12 +188,13 @@ export function invokeAgent(opts: InvokeOpts): ReadableStream<InvokeEvent> {
         promptBytes: Buffer.byteLength(opts.prompt, "utf8"),
       });
 
-      child.stdin.on("error", () => {});
+      const activeChild = child;
+      activeChild.stdin.on("error", () => {});
       try {
         // stdin-protocol agents read the prompt from stdin; argv / argv-message
         // agents already have it on the command line.
-        if (!promptViaArgv && !promptViaMessageFlag) child.stdin.write(opts.prompt);
-        child.stdin.end();
+        if (!promptViaArgv && !promptViaMessageFlag) activeChild.stdin.write(opts.prompt);
+        activeChild.stdin.end();
       } catch {}
 
       // One parser per spawn so cross-line dedupe state (sawStreamEventText)
@@ -202,8 +202,8 @@ export function invokeAgent(opts: InvokeOpts): ReadableStream<InvokeEvent> {
       const parse = makeParser(opts.agent);
 
       let stdoutBuf = "";
-      child.stdout.setEncoding("utf8");
-      child.stdout.on("data", (chunk: string) => {
+      activeChild.stdout.setEncoding("utf8");
+      activeChild.stdout.on("data", (chunk: string) => {
         if (closed) return;
         stdoutBuf += chunk;
         // OpenClaw emits one big multi-line JSON document — accumulate and
@@ -229,17 +229,17 @@ export function invokeAgent(opts: InvokeOpts): ReadableStream<InvokeEvent> {
         }
       });
 
-      child.stderr.setEncoding("utf8");
-      child.stderr.on("data", (chunk: string) => {
+      activeChild.stderr.setEncoding("utf8");
+      activeChild.stderr.on("data", (chunk: string) => {
         safeEnqueue({ type: "stderr", text: chunk });
       });
 
-      child.on("error", (err) => {
+      activeChild.on("error", (err) => {
         safeEnqueue({ type: "error", message: err.message });
         safeClose();
       });
 
-      child.on("close", (code) => {
+      activeChild.on("close", (code) => {
         if (opts.agent === "openclaw") {
           // OpenClaw's `agent --local --json` emits one pretty-printed JSON
           // document on stdout. The visible reply is at
