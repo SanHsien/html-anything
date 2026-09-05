@@ -12,7 +12,6 @@ type Body = {
   content: string;
   format?: string;
   model?: string;
-  cwd?: string;
   /**
    * Optional absolute path to the agent binary. The Settings UI lets the
    * user override auto-detection when their CLI lives somewhere our PATH
@@ -74,7 +73,6 @@ export async function POST(req: NextRequest) {
     content,
     format = "text",
     model,
-    cwd,
     binOverride,
     editFromHtml,
     editFromContent,
@@ -109,7 +107,6 @@ export async function POST(req: NextRequest) {
     agent,
     prompt,
     model,
-    cwd,
     binOverride,
     signal: abortCtl.signal,
   });

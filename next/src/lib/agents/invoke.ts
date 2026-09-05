@@ -7,7 +7,6 @@ import { buildArgv, envFor, makeParser, UnsupportedAgentProtocolError } from "./
 export type InvokeOpts = {
   agent: string;
   prompt: string;
-  cwd?: string;
   model?: string;
   signal?: AbortSignal;
   /**
@@ -162,7 +161,7 @@ export function invokeAgent(opts: InvokeOpts): ReadableStream<InvokeEvent> {
         // cross-spawn resolves Windows .cmd/.bat shims without placing the
         // prompt or other argv values in a command shell.
         const spawned = crossSpawn(bin!, argv, {
-          cwd: opts.cwd ?? process.cwd(),
+          cwd: process.cwd(),
           env,
           stdio: ["pipe", "pipe", "pipe"],
           shell: false,
