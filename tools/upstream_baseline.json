@@ -1,0 +1,10 @@
+{
+  "repo": "https://github.com/nexu-io/html-anything.git",
+  "branch": "main",
+  "reviewed_through": "c31204544230578ac814026fecc153c6e36587ae",
+  "reviewed_date": "2026-08-30",
+  "decision_log": "docs/fork/DECISIONS.md",
+  "notes": "Fork starting point. 2026-08-30：初次 triage 完成。commit 軸 0 筆新增（本 fork 在 upstream tip）。PR 水位 → 145、issue → 141。本 fork 有分歧產品碼（14 個 next/src/lib/ 檔），所以逐筆比對而非套用結構性論證：13 筆關閉未合併裡 10 筆與分歧檔零重疊；#119 已涵蓋（本 fork 用 ?? 不是 ||，且有三條 issue #110 回歸測試）、#106 不引用（把預設語言改英文，本 fork 是繁中維護線）、#127 不引用（60 檔未採納架構提案）。逐項證據見 docs/fork/DECISIONS.md 同日條目。",
+  "reviewed_pr_through": 145,
+  "reviewed_issue_through": 141
+}
