@@ -145,13 +145,10 @@ def test_missing_relative_rejects_path_escape() -> None:
 
 def test_agents_overlay_points_at_fork_rules() -> None:
     agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
-    claude = (ROOT / "CLAUDE.md").read_text(encoding="utf-8")
 
     assert "SanHsien 維護型 fork overlay" in agents
     assert "FORK.md" in agents
     assert "不要推 `upstream`" in agents
-    assert "FORK.md" in claude
-    assert claude.strip() != "@AGENTS.md"
     assert "Workspace Shape" in agents
     assert "pnpm -F @html-anything/next" in agents
     assert "REVIEW.md" in agents
@@ -220,10 +217,10 @@ def test_gitignore_covers_overlay_and_secrets() -> None:
     assert "credentials.json" in text
 
 
-def test_claude_md_is_a_regular_file() -> None:
-    claude = ROOT / "CLAUDE.md"
-    assert claude.is_file()
-    assert not claude.is_symlink()
+def test_agents_md_is_a_regular_file() -> None:
+    agents = ROOT / "AGENTS.md"
+    assert agents.is_file()
+    assert not agents.is_symlink()
 
 
 def test_fork_workflows_use_python_314() -> None:

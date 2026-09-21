@@ -17,7 +17,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Root is the public harness boundary only: workspace metadata, `.github/workflows/ci.yml`, `scripts/guard.ts`, and repository docs.
 - `next/` owns the complete Next application: app routes, components, app libraries, public assets, Next config, app TypeScript config, and app unit tests.
 - `e2e/` owns browser-level tests as the only source of truth: Playwright config, e2e TypeScript config, helper scripts, and flat `ui/*.test.ts` cases.
+- `cli/` and the product `SKILL.md` templates follow upstream, unless `FORK.md` has recorded a fork-specific correction.
 - Do not add Playwright tests under `next/`. Do not add app source back at root `src/` or root `app/`.
+- Do not add root `tests/ui`; `scripts/guard.ts` blocks it. Fork-specific tests belong in `tests/` (not `tests/ui`).
 - Root `package.json` must not proxy app or e2e scripts. Use pnpm workspace filters from the repository root.
 
 ## Commands
@@ -30,3 +32,10 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - App build: `pnpm -F @html-anything/next build`
 - E2E typecheck: `pnpm -F @html-anything/e2e typecheck`
 - E2E tests: `pnpm -F @html-anything/e2e test`
+
+## Fork 維護規則
+
+- 這是保留上游歷史的 fork；不要移除 `upstream`、原作者或 Apache-2.0 授權標示。
+- 修改維護工具或測試前，先跑對應 pytest；提交前跑 `pwsh -NoProfile -File tools\dev_check.ps1`。
+- `.env*`、API key、cookie、帳號資料與使用者生成的 HTML／PNG 一律不可提交。
+- 使用繁體中文，直接交付可驗證結果。
