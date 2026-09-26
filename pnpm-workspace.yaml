@@ -6,3 +6,19 @@ packages:
 ignoredBuiltDependencies:
   - sharp
   - unrs-resolver
+
+overrides:
+  # image-size <= 2.0.2 DoS (ICNS / JXL / HEIF). Only reached via pptxgenjs,
+  # which pins ^1.2.1 but never loads it at runtime (it probes an optional
+  # `sizeof` module). Remove once pptxgenjs depends on image-size >= 2.0.3.
+  image-size@<2.0.3: '>=2.0.3 <3'
+  # Transitive advisory floors (each has a single major in the lockfile).
+  # pnpm matches an override selector against the *declared* range, not the
+  # resolved version, so these are unconditional within the current major.
+  # Drop each once its parent resolves the floor on its own (pnpm why <pkg>).
+  undici: '^6.28.0'                       # via juice > cheerio
+  ws: '^8.21.0'                           # via happy-dom
+  postcss: '^8.5.23'                      # via @tailwindcss/postcss
+  nanoid: '^3.3.18'                       # via postcss
+  esbuild: '^0.28.1'                      # via tsx
+  baseline-browser-mapping: '^2.11.0'     # via next
