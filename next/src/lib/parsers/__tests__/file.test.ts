@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import * as XLSX from "xlsx";
 
 const unpdf = vi.hoisted(() => ({
   extractText: vi.fn(),
@@ -10,6 +11,42 @@ vi.mock("unpdf", () => unpdf);
 import { parseFile } from "../file";
 
 describe("parseFile", () => {
+  it("parses every sheet in an XLSX workbook", async () => {
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(
+      workbook,
+      XLSX.utils.aoa_to_sheet([
+        ["Name", "Score"],
+        ["Ada", 10],
+      ]),
+      "Summary",
+    );
+    XLSX.utils.book_append_sheet(
+      workbook,
+      XLSX.utils.aoa_to_sheet([
+        ["Task", "Status"],
+        ["Ship", "Done"],
+      ]),
+      "Details",
+    );
+    const bytes = XLSX.write(workbook, {
+      type: "array",
+      bookType: "xlsx",
+    }) as ArrayBuffer;
+    const file = new File([new Uint8Array(bytes)], "workbook.xlsx");
+
+    const parsed = await parseFile(file);
+
+    expect(parsed).toEqual({
+      filename: "workbook.xlsx",
+      format: "csv",
+      text: [
+        "# Sheet: Summary\nName,Score\nAda,10",
+        "# Sheet: Details\nTask,Status\nShip,Done",
+      ].join("\n\n"),
+    });
+  });
+
   it("extracts text-layer PDFs into markdown-style page sections", async () => {
     const proxy = { destroy: vi.fn() };
     unpdf.getDocumentProxy.mockResolvedValue(proxy);

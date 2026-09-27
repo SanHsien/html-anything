@@ -24,7 +24,7 @@ Browser (Next.js 16)
 
 ## 本機開發（Windows）
 
-需要 Python 3.11+（fork gate）與 Node 20+／pnpm 10（產品）。本機已驗證 Node 26 + Python 3.14。Corepack 若不在 PATH，先 `npm install -g pnpm@10.33.2` 或啟用 Corepack。
+需要 Python 3.11+（fork gate）與 Node 20.9+／pnpm 10（產品；Next.js 16 最低要求 Node 20.9）。本機已驗證 Node 26 + Python 3.14。Corepack 若不在 PATH，先 `npm install -g pnpm@10.33.2` 或啟用 Corepack。
 
 ```powershell
 python -m venv .venv

@@ -108,8 +108,8 @@ importers:
         specifier: ^1.2.2
         version: 1.6.2
       xlsx:
-        specifier: https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz
-        version: https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz
+        specifier: file:vendor/xlsx-0.20.3.tgz
+        version: file:next/vendor/xlsx-0.20.3.tgz
       zustand:
         specifier: ^5.0.13
         version: 5.0.13(@types/react@19.2.14)(react@19.2.4)
@@ -1548,8 +1548,8 @@ packages:
       utf-8-validate:
         optional: true
 
-  xlsx@https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz:
-    resolution: {tarball: https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz}
+  xlsx@file:next/vendor/xlsx-0.20.3.tgz:
+    resolution: {integrity: sha512-oLDq3jw7AcLqKWH2AhCpVTZl8mf6X2YReP+Neh0SJUzV/BdZYjth94tG5toiMB1PPrYtxOCfaoUCkvtuH+3AJA==, tarball: file:next/vendor/xlsx-0.20.3.tgz}
     version: 0.20.3
     engines: {node: '>=0.8'}
     hasBin: true
@@ -2659,7 +2659,7 @@ snapshots:
 
   ws@8.21.3: {}
 
-  xlsx@https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz: {}
+  xlsx@file:next/vendor/xlsx-0.20.3.tgz: {}
 
   zustand@5.0.13(@types/react@19.2.14)(react@19.2.4):
     optionalDependencies:
