@@ -138,3 +138,21 @@ exit 1，在 triage 做完之前這支檢查是紅的。這是真實狀態，不
 上游 issue 是產品的功能請求與使用問題（Hermes 支援、WSL agent 偵測、PPT 匯出、
 中文使用回報等）。本 fork 的分歧只在上述 14 個檔，這些 issue 都不落在那些檔的行為上；
 真正成立的缺陷修正會經由 commit 軸抵達。
+
+## 2026-09-30：第二輪上游審查（commit 至 553ed98、PR 至 #159、issue 至 #158）
+
+### commit 軸（1 筆）
+
+- **採用** `553ed98` #129 MiniMax 模型加入 picker：4 檔 +63 行，只加模型清單與測試。本 fork 對應檔 `next/src/lib/agents/detect.ts`、`cli/src/agents-detect.ts` 不在 14 個分歧檔內，`cherry-pick -x` 無衝突（本 fork SHA `ff1444b`）。驗證：`cli` 的 `tsc --noEmit` 對非測試原始碼無錯誤；本機未安裝 vitest，新增的 vitest 測試未在本機執行，由上游 CI 涵蓋。
+
+### PR 軸（9 筆，#146 至 #159）
+
+分歧檔（`deck.ts`、`clipboard.ts`、`hyperframes.ts`、`skills/install.ts` 等）與這 9 筆改動的檔案零重疊，全部只碰 `agents/`、`use-convert`、settings／welcome modal、文件。
+
+- **採用待辦（adoption pending: 上游尚未合併且需 vitest 與 UI 驗證，本機無法驗證）**：#149 Codex 生命週期處理（issue #148）、#153 copilot/qwen/bob 重複 payload 只發一次 delta、#159 use-convert 批次 SSE（issue #158，記憶體耗盡）。觸發條件：上游合併後隨 commit 軸抵達。
+- **不適用**：#146（OPEN）、#147（CLOSED，#146 的重複）OpenClaw 多行 prompt；#150 Grok Build 偵測、#157 ZCode adapter（新 agent，本 fork 不使用）；#154、#155 Memcode 整合（上游專屬服務）。
+
+### issue 軸（4 筆，#148 至 #158）
+
+- #148、#158：對應 #149、#159，見上。
+- #152（匯出 HTML 分頁顯示錯誤的使用回報）、#156（社群 Windows 桌面版連結）：不適用；#152 無重現與對應修正，觸發條件為上游出現修正 PR。
