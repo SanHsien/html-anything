@@ -22,3 +22,4 @@ overrides:
   nanoid: '^3.3.18'                       # via postcss
   esbuild: '^0.28.1'                      # via tsx
   baseline-browser-mapping: '^2.11.0'     # via next
+  source-map-js: '^1.2.2'                # transitive DoS advisory floor

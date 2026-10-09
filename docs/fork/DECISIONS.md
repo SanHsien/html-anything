@@ -156,3 +156,10 @@ exit 1，在 triage 做完之前這支檢查是紅的。這是真實狀態，不
 
 - #148、#158：對應 #149、#159，見上。
 - #152（匯出 HTML 分頁顯示錯誤的使用回報）、#156（社群 Windows 桌面版連結）：不適用；#152 無重現與對應修正，觸發條件為上游出現修正 PR。
+## 2026-10-10：安全依賴覆寫與 Next 修補
+
+- `source-map-js` 安全下限併入 `pnpm-workspace.yaml` 的既有覆寫；根目錄 `package.json` 不另設 `pnpm.overrides`，避免遮蓋原有七項安全下限。保留 image-size 2.0.4、PostCSS 8.5.28 與其他既有解析版本。
+- Next 16.3.6 更新至 16.3.8，包含官方 SSRF、快取與資訊洩漏修補；同版 `@next/env`／SWC 隨 lock 更新，React 與其他 manifest 範圍不變。官方版本說明：<https://github.com/vercel/next.js/releases/tag/v16.3.8>。
+- frozen install、app typecheck、186 項 app 測試與 build 通過。既有 Windows fork gate 的 40 項測試、guard 與 e2e typecheck 已通過；此輪沒有執行 Playwright 產品 e2e。
+- 原始 `pnpm audit` 仍以 workspace 路徑 `cli`／版本 0.1.0 回報 GHSA-6cpc-mj5c-m9rq。實際 private workspace 名稱是 `@html-anything/cli`，沒有安裝 npm `cli`，lock 的 registry package keys 與 `pnpm why -r cli` 均無此套件。該告警的官方身分為 npm `cli`（來源 chriso/cli），不是此 workspace：<https://github.com/advisories/GHSA-6cpc-mj5c-m9rq>。
+- 將 lock 中所有 registry 套件／版本送至 npm 官方 bulk advisory endpoint，結果為空（0 項）。保留原始 audit 的非零退出與錯配證據，不新增忽略規則、不修改 audit 閘門，也不宣稱原始 `pnpm audit` 已歸零。

@@ -9,10 +9,5 @@
   "packageManager": "pnpm@10.33.2",
   "devDependencies": {
     "tsx": "^4.22.1"
-  },
-  "pnpm": {
-    "overrides": {
-      "source-map-js": "^1.2.2"
-    }
   }
 }
