@@ -163,3 +163,29 @@ exit 1，在 triage 做完之前這支檢查是紅的。這是真實狀態，不
 - frozen install、app typecheck、186 項 app 測試與 build 通過。既有 Windows fork gate 的 40 項測試、guard 與 e2e typecheck 已通過；此輪沒有執行 Playwright 產品 e2e。
 - 原始 `pnpm audit` 仍以 workspace 路徑 `cli`／版本 0.1.0 回報 GHSA-6cpc-mj5c-m9rq。實際 private workspace 名稱是 `@html-anything/cli`，沒有安裝 npm `cli`，lock 的 registry package keys 與 `pnpm why -r cli` 均無此套件。該告警的官方身分為 npm `cli`（來源 chriso/cli），不是此 workspace：<https://github.com/advisories/GHSA-6cpc-mj5c-m9rq>。
 - 將 lock 中所有 registry 套件／版本送至 npm 官方 bulk advisory endpoint，結果為空（0 項）。保留原始 audit 的非零退出與錯配證據，不新增忽略規則、不修改 audit 閘門，也不宣稱原始 `pnpm audit` 已歸零。
+## 2026-10-10：上游 PR #161／issue #160 逐筆審查
+
+### PR #161：Antigravity agent adapter（延後採用）
+
+- 實讀 open、非 draft PR 完整 9 檔 diff；head `26aacf9e3cb8cc6ecfe96e033f86fd9e0c2f5fe5`，base `553ed98c283f9c0f489902d035416a972d6a9699`。來源：<https://github.com/nexu-io/html-anything/pull/161>。
+- 變更是新增功能：兩份 detect 註冊 `agy`／`ANTIGRAVITY_BIN`，兩份 argv/parser 增加 `init`／`step_update`／`result`、工具 HTML rescue、usage 轉換與 result 去重，另修改 invoke 註解、測試、README。沒有現有匯出或 Windows spawn 缺陷修補。
+- 本 fork `next/src/lib/agents/invoke.ts` 使用 `cross-spawn`、`shell: false` 處理 Windows shim，PR 的尾端 `-p`／prompt 路徑與此契約相容；但新 adapter 固定 `--effort medium` 與權限參數，新增測試多為 parser／mock，沒有本 fork Windows `agy` 的真實協定驗收。本輪不為新增 adapter 啟動外部模型或登入。
+- **重評條件**：上游合併此 head 或維護者要求使用 `agy` 時，核實實際 CLI 的上述 flags、Windows shim、model 透傳、session／usage 與最終 HTML 去重；維持本 fork cross-spawn 邊界後再採用。原 README 的 fork overlay 與英文產品說明須保留。
+
+### Issue #160：小紅書 PNG 被截斷（裁切缺陷已本機修補，待審查發布）
+
+- 實讀 issue 本文、全部 2 則留言及關聯 issue #84；#160 timeline 無 cross-referenced PR，PR 搜尋亦無 #160／#84 關聯修補。來源：<https://github.com/nexu-io/html-anything/issues/160>。上游留言是線索，以下結論另以本 fork 原始碼核實。
+- `next/src/lib/export/image.ts` 的 `iframeToBlob` 預設 scale 2，`safeMax = floor(16000 / scale)`，以 `Math.min(layoutHeight, safeMax)` 擷取；高於 8000 CSS 像素的內容仍回傳成功 blob，會靜默遺失下方內容。這是本 fork 的真實缺陷，**不能列為已修復**。
+- `next/src/components/export-menu.tsx` 僅在 `parseDeck(...).isDeck` 時提供 `exportDeckPngZip`；普通堆疊卡片不會自動分張。這是另一个卡片分割功能缺口，不等同 PNG 截斷；issue #84 的其他 absolute-slide 高度問題不可直接套一行修補當作 #160 已解決。
+- **最小修補範圍**：`next/src/lib/export/image.ts` 與對應新增 image unit test、`e2e/ui/export-menu.test.ts`。至少保證超限內容不會被截斷後仍報成功：以明確可測策略保留全內容（例如有界自動降低 scale），或明確拒絕超限並指示分頁／分張，不能單純移除 canvas 上限。測試涵蓋超高 HTML 尾端、正常短頁、原始 iframe style 成功／失敗還原；用一筆無外部登入的 browser fixture 驗收。若要普通卡片逐張 ZIP，需另界定卡片標記、修改 export-menu／卡片 parser 與相應 e2e，不在此次文件 triage 中擅自新增產品契約。
+- **重評／執行條件**：立即交由產品修補 lane 完成上述最小範圍；取得實際修補與驗收證據前保持未完成狀態。若上游提供 patch，先按此原始碼與測試契約審查再採用。
+
+本輪只完成這兩項審查，PR 水位 159 → 161、issue 158 → 160；commit 水位 `553ed98c283f9c0f489902d035416a972d6a9699` 不變。水位表示已審查，不表示產品缺陷已修復。
+
+#### #160 裁切缺陷的本機修補與驗收
+
+- `iframeToBlob` 保留 scale 2 與每邊 16,000 像素的單張安全限制；安全尺寸使用完整 layoutHeight，超高／超寬或使用者指定較小 maxHeight 時明確報错，沿用選單 error toast，不下載部分圖、不顯示成功。較大的 maxHeight 不能繞過安全上限；scale／maxHeight 必須為正且有限。不新增普通卡片分張 ZIP，也不自動降低圖片品質。
+- 將暫改 iframe height／html overflow／body overflow 與等待重排全部移入同一 `try/finally`，包括重排排程與 renderer 失敗都還原原始 inline styles。
+- 17 項 image focused unit tests 通過，涵蓋短頁、8000 CSS px 邊界、超限不 render／download、指定 maxHeight、安全上限、超寬、非法參數與成功／兩種失敗的還原。app 與 e2e typecheck 通過。
+- Chromium 使用既有 export-menu seedStore 一筆 `PNG-160-smoke` fixture：超高頁顯示明確錯誤且沒有 download／成功 toast；同一 fixture 改成安全尺寸後，下載 PNG 高度符合瀏覽器實際量測（包含文字溢出），尾端紅色像素為 `[255,0,0,255]`。其餘 3 個 export-menu 案例通過。首輪固定 400px 預期與第二輪固定 1000px 預期不符瀏覽器 layout；改成實際尺寸與尾端像素驗收後，只重跑該失敗案例，未重跑已通過的 186 項 app／40 項 Python 全套。
+- 此為本機未提交成果，仍需 fresh review、發布與 exact-SHA CI；普通堆疊卡片自動分張仍是上述另一項未採用功能缺口，不宣稱 issue 的所有功能要求皆已新增。

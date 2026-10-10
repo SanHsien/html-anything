@@ -79,6 +79,57 @@ async function seedStore(page: Page, opts: SeedOptions) {
 }
 
 test.describe("Export menu", () => {
+  test("rejects oversized PNG without a partial download or success toast", async ({ page }) => {
+    await seedStore(page, {
+      html: '<!doctype html><html><body style="margin:0"><main style="height:8100px">PNG-160-smoke<span style="display:block;position:absolute;top:8050px">PNG-160-tail</span></main></body></html>',
+      content: "PNG-160-smoke",
+    });
+    await page.goto("/");
+    const preview = page.frameLocator('iframe[title="preview"]');
+    await expect(preview.getByText("PNG-160-tail")).toBeAttached();
+    const downloads: string[] = [];
+    page.on("download", download => downloads.push(download.suggestedFilename()));
+    await page.getByRole("button", { name: /export/i }).click();
+    await page.getByTestId("export-menu").getByRole("button", { name: /\.png hi-res image/ }).click();
+    await expect(page.getByText(/Image is too large for a complete PNG/)).toBeVisible();
+    await expect(page.getByText(/Image downloaded/)).toHaveCount(0);
+    expect(downloads).toEqual([]);
+    await expect(page.getByRole("button", { name: /export/i })).toBeEnabled();
+
+    // Reuse the same fixture to prove a complete, safe-sized PNG includes its tail.
+    await preview.locator("main").evaluate(main => {
+      main.style.height = "1000px";
+      const tail = main.querySelector("span")!;
+      tail.style.cssText = "display:block;position:absolute;top:990px;height:10px;width:100%;background:rgb(255,0,0)";
+    });
+    const expectedImage = await preview.locator("body").evaluate(body => {
+      const doc = body.ownerDocument;
+      const tail = body.querySelector("span")!.getBoundingClientRect();
+      return {
+        height: Math.max(body.scrollHeight, (body as HTMLElement).offsetHeight, doc.documentElement.scrollHeight, doc.documentElement.offsetHeight, doc.documentElement.clientHeight) * 2,
+        tailY: Math.floor((tail.top + tail.height / 2) * 2),
+      };
+    });
+    await page.getByRole("button", { name: /export/i }).click();
+    const downloaded = page.waitForEvent("download");
+    await page.getByTestId("export-menu").getByRole("button", { name: /\.png hi-res image/ }).click();
+    const download = await downloaded;
+    const png = await readFile((await download.path())!);
+    expect(png.readUInt32BE(20)).toBe(expectedImage.height);
+    const tailPixel = await page.evaluate(async ({ base64, tailY }) => {
+      const image = new Image();
+      image.src = `data:image/png;base64,${base64}`;
+      await image.decode();
+      const canvas = document.createElement("canvas");
+      canvas.width = 1;
+      canvas.height = 1;
+      const context = canvas.getContext("2d")!;
+      context.drawImage(image, 1, tailY, 1, 1, 0, 0, 1, 1);
+      return Array.from(context.getImageData(0, 0, 1, 1).data);
+    }, { base64: png.toString("base64"), tailY: expectedImage.tailY });
+    expect(tailPixel).toEqual([255, 0, 0, 255]);
+  });
+
   test("keeps Remotion hidden for regular HTML exports", async ({ page }) => {
     await seedStore(page, { html: plainHtml });
 

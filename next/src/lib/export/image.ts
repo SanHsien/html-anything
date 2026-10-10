@@ -8,9 +8,8 @@ export type ImageOpts = {
   type?: "image/png" | "image/jpeg" | "image/webp";
   backgroundColor?: string;
   /**
-   * Maximum height in CSS pixels for the captured area.
-   * Defaults to (16000 / scale) — the upper bound most browsers accept
-   * for a single canvas / SVG foreignObject.
+   * Maximum complete-page height in CSS pixels. Oversized pages are rejected,
+   * never cropped. Cannot exceed the single-image limit of (16000 / scale).
    */
   maxHeight?: number;
 };
@@ -19,6 +18,20 @@ const NEXT_FRAME = () =>
   new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
 
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+const MAX_IMAGE_DIMENSION = 16000;
+
+function captureLimits(opts: ImageOpts): { scale: number; maxHeight: number } {
+  const scale = opts.scale ?? 2;
+  if (!Number.isFinite(scale) || scale <= 0) {
+    throw new Error("scale must be a positive finite number");
+  }
+  if (opts.maxHeight !== undefined && (!Number.isFinite(opts.maxHeight) || opts.maxHeight <= 0)) {
+    throw new Error("maxHeight must be a positive finite number");
+  }
+  const hardLimit = Math.floor(MAX_IMAGE_DIMENSION / scale);
+  return { scale, maxHeight: Math.min(opts.maxHeight ?? hardLimit, hardLimit) };
+}
 
 /**
  * Wait until everything inside the iframe document is reasonably stable:
@@ -125,8 +138,9 @@ function fullScrollHeight(doc: Document): number {
 
 /** Render a DOM node to a Blob. Used for standalone elements; for iframes prefer {@link iframeToBlob}. */
 export async function nodeToBlob(node: HTMLElement, opts: ImageOpts = {}): Promise<Blob> {
+  const { scale } = captureLimits(opts);
   const blob = await domToBlob(node, {
-    scale: opts.scale ?? 2,
+    scale,
     type: opts.type ?? "image/png",
     backgroundColor: opts.backgroundColor,
   });
@@ -156,6 +170,7 @@ export async function iframeToBlob(
   iframe: HTMLIFrameElement,
   opts: ImageOpts = {},
 ): Promise<Blob> {
+  const { scale, maxHeight } = captureLimits(opts);
   const doc = iframe.contentDocument;
   const win = iframe.contentWindow;
   if (!doc || !win) throw new Error("iframe not ready");
@@ -171,25 +186,28 @@ export async function iframeToBlob(
   // hidden scroll regions. Parent has overflow:hidden so this is invisible.
   const fullHeight = fullScrollHeight(doc);
   if (!fullHeight) throw new Error("preview has no content yet");
-  iframe.style.height = `${fullHeight}px`;
-  doc.documentElement.style.overflow = "visible";
-  doc.body.style.overflow = "visible";
-
-  // Wait a couple of frames for the browser to re-flow at the new size.
-  await NEXT_FRAME();
-  await sleep(60);
-  await NEXT_FRAME();
-
   try {
+    iframe.style.height = `${fullHeight}px`;
+    doc.documentElement.style.overflow = "visible";
+    doc.body.style.overflow = "visible";
+
+    // Keep resizing and reflow inside the restoration boundary as well.
+    await NEXT_FRAME();
+    await sleep(60);
+    await NEXT_FRAME();
+
     const layoutWidth =
       doc.documentElement.clientWidth ||
       iframe.clientWidth ||
       doc.body.scrollWidth;
     const layoutHeight = fullScrollHeight(doc);
 
-    const scale = opts.scale ?? 2;
-    const safeMax = opts.maxHeight ?? Math.floor(16000 / scale);
-    const captureHeight = Math.min(layoutHeight, safeMax);
+    if (!Number.isFinite(layoutWidth) || layoutWidth <= 0 || !Number.isFinite(layoutHeight) || layoutHeight <= 0) {
+      throw new Error("preview has no measurable content");
+    }
+    if (layoutHeight > maxHeight || layoutWidth * scale > MAX_IMAGE_DIMENSION) {
+      throw new Error("Image is too large for a complete PNG. Use shorter content or split it into deck pages; no image was downloaded.");
+    }
 
     const backgroundColor = resolveBackground(doc, win, opts.backgroundColor);
 
@@ -198,7 +216,7 @@ export async function iframeToBlob(
       type: opts.type ?? "image/png",
       backgroundColor,
       width: layoutWidth,
-      height: captureHeight,
+      height: layoutHeight,
       fetch: {
         requestInit: { cache: "force-cache" },
       },

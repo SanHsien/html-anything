@@ -29,6 +29,8 @@ python tools\check_upstream_updates.py --strict
 
 Baseline 代表「已審查」，不代表「全部已合併」。
 
+2026-10-10 已逐筆審查 PR #161 與 issue #160，commit 水位仍為 `553ed98`。PR #161 的 Antigravity 新功能待 Windows 協定驗證；issue #160 的 PNG 靜默截斷已確認為本 fork 缺陷，產品修補仍待完成。即使 upstream checker 不再列出這兩筆，不能把審查水位當成缺陷已修復；待辦與驗收範圍見 `DECISIONS.md` 同日 upstream 條目。
+
 **四個面向都要看，不是只看 commit**：commit、open PR、open issue、上游分支。
 
 README 衝突的解法：保留頂部 overlay，把上游新產品說明留在英文 `README.md`。不要把公開入口改成繁中主檔。來源與授權 credit 留在 README 與 `NOTICE.md`。
