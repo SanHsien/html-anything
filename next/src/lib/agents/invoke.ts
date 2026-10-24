@@ -2,7 +2,13 @@ import type { ChildProcessWithoutNullStreams } from "node:child_process";
 import { existsSync } from "node:fs";
 import crossSpawn from "cross-spawn";
 import { resolveOnPath, resolveOpenclawAgentId, AGENTS } from "./detect";
-import { buildArgv, envFor, makeParser, UnsupportedAgentProtocolError } from "./argv";
+import {
+  buildArgv,
+  envFor,
+  makeParser,
+  sanitizeAgentStderrLine,
+  UnsupportedAgentProtocolError,
+} from "./argv";
 
 export type InvokeOpts = {
   agent: string;
@@ -201,6 +207,15 @@ export function invokeAgent(opts: InvokeOpts): ReadableStream<InvokeEvent> {
       const parse = makeParser(opts.agent);
 
       let stdoutBuf = "";
+      let stderrBuf = "";
+      const flushStderr = () => {
+        if (!stderrBuf) return;
+        safeEnqueue({
+          type: "stderr",
+          text: sanitizeAgentStderrLine(opts.agent, stderrBuf),
+        });
+        stderrBuf = "";
+      };
       activeChild.stdout.setEncoding("utf8");
       activeChild.stdout.on("data", (chunk: string) => {
         if (closed) return;
@@ -230,7 +245,20 @@ export function invokeAgent(opts: InvokeOpts): ReadableStream<InvokeEvent> {
 
       activeChild.stderr.setEncoding("utf8");
       activeChild.stderr.on("data", (chunk: string) => {
-        safeEnqueue({ type: "stderr", text: chunk });
+        if (opts.agent !== "codex") {
+          safeEnqueue({ type: "stderr", text: chunk });
+          return;
+        }
+        stderrBuf += chunk;
+        let nl: number;
+        while ((nl = stderrBuf.indexOf("\n")) !== -1) {
+          const line = stderrBuf.slice(0, nl);
+          stderrBuf = stderrBuf.slice(nl + 1);
+          safeEnqueue({
+            type: "stderr",
+            text: `${sanitizeAgentStderrLine(opts.agent, line)}\n`,
+          });
+        }
       });
 
       activeChild.on("error", (err) => {
@@ -239,6 +267,7 @@ export function invokeAgent(opts: InvokeOpts): ReadableStream<InvokeEvent> {
       });
 
       activeChild.on("close", (code) => {
+        flushStderr();
         if (opts.agent === "openclaw") {
           // OpenClaw's `agent --local --json` emits one pretty-printed JSON
           // document on stdout. The visible reply is at
@@ -309,6 +338,7 @@ export function invokeAgent(opts: InvokeOpts): ReadableStream<InvokeEvent> {
         try {
           child?.kill("SIGTERM");
         } catch {}
+        flushStderr();
         safeClose();
       };
       opts.signal?.addEventListener("abort", onAbort, { once: true });
