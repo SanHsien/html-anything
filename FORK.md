@@ -19,7 +19,7 @@
 | 項目 | 說明 |
 |---|---|
 | `README.md` | 上游英文產品說明 + 頂部 fork overlay。繁中維護在 `FORK.md`／`REVIEW.md`。上游 `README.zh-CN.md` 保留 |
-| `AGENTS.md` / `CLAUDE.md` | 開頭 overlay；下文仍是上游 workspace 規則。`CLAUDE.md` 改為一般檔，不是 `@AGENTS.md` symlink |
+| `AGENTS.md` | 開頭 overlay；下文仍是上游 workspace 規則。上游的 `CLAUDE.md`（`@AGENTS.md` symlink）已刪除，只維護 `AGENTS.md` |
 | `NOTICE.md` / `FORK.md` | 來源、授權與同步說明 |
 | `SECURITY.md` / `CONTRIBUTING.md` | 開頭 overlay：本線 PR／overlay 問題走 SanHsien；產品貢獻與產品漏洞仍指向上游 |
 | `tools/dev_check.ps1` | Windows 本機一鍵 fork gate |
