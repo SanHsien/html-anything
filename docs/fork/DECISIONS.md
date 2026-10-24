@@ -50,7 +50,7 @@
 
 **決定**：在本 fork 修完 REVIEW 裡還能改、且不改產品信任模型的項：Windows symlink 測試改 ustar、CONTRIBUTING overlay 寫 `pnpm -F`、簡中 export-menu 對齊、overlay 文件 skill 數改 81、產品 `ci.yml` pin action SHA、marketplace id 驗證改拆解而非單一 regex、stripTags 迴圈、屬性跳脫。不送上游。
 
-**理由**：主人這次對話要求「可修的都修、先不考慮回貢」。spawn CLI、iframe `allow-scripts allow-same-origin`、英文 README 行銷數字仍屬產品契約，維持不改。
+**理由**：維護者這次對話要求「可修的都修、先不考慮回貢」。spawn CLI、iframe `allow-scripts allow-same-origin`、英文 README 行銷數字仍屬產品契約，維持不改。
 
 **限制**：
 
@@ -198,3 +198,19 @@ exit 1，在 triage 做完之前這支檢查是紅的。這是真實狀態，不
 - 驗收：`pnpm install --frozen-lockfile`、guard、next／e2e typecheck、next 203 項測試、next build 通過；`tools\dev_check.ps1` 綠。`pnpm audit` 只剩 low 的 `cli`（見上一輪：workspace 名稱錯配，非真實依賴）。cli workspace 的 16 項測試在 Windows 本機與修補前基線同樣失敗（POSIX 路徑假設），CI 不跑 cli 測試。
 - 本機從 Git Bash 執行測試時 PATH 上的 GNU tar 會讓 `skills` 相關 16 項測試因 `C:` 路徑失敗，與依賴無關；把 `C:\Windows\System32` 放在 PATH 前面（bsdtar）即 203/203。
 - 未執行 Playwright 產品 e2e；由 PR 的 CI 驗證。
+
+## 2026-10-24：上游審查至 975fb3b／PR #162（commit 4 筆、PR 1 筆）
+
+上游與本 fork 沒有共同祖先（`git merge upstream/main` 回 unrelated histories），所以逐筆 cherry-pick。
+
+| 項目 | 結論 | 證據 |
+| --- | --- | --- |
+| `975fb3b` Codex 生命週期（#149） | **採用，手工解衝突** | `invoke.ts` 衝突：本 fork 以 `cross-spawn` 啟動並把子行程存在 `activeChild`（`next/src/lib/agents/invoke.ts:196`），上游寫 `child`；改成沿用 `activeChild`，其餘照上游（stderr 逐行 `sanitizeAgentStderrLine`、`close`／abort 時 `flushStderr`）。`argv.ts`、`use-convert.ts` 與測試無衝突 |
+| `ce50359` WeChat 貼上內聯 computed style（#94） | 採用 | `wechat.ts`、`clipboard.ts`、`export-menu.test.ts` 自動合併無衝突；本 fork 在 `clipboard.ts` 的差異（圖片匯出）不在同一段 |
+| `94137b2`、`597960c` README | 採用 | 只動英文 `README.md` 與 `README.zh-CN.md`，保留頂部 overlay |
+| 上游 PR #162（MiniMax 模型清單） | **不採用，未合併** | 仍是 open；改 `detect.ts` 模型清單並移除 `MiniMax-M2.7`，新增的 `minimax-invoke.test.ts` 用 `vi.mock('node:child_process')`，本 fork 走 `cross-spawn`，照抄會讓測試失效。模型名稱是否存在無法在本機驗證。**重看條件**：上游合併後經 commit 軸抵達時，再逐檔對照 |
+| 上游 issue | 無新項目 | 水位維持 #160 |
+
+水位推到 `975fb3bcb98f1777781fb4c738902d36e32c8c46`／PR #162／issue #160。水位代表「已審查」，不代表 #162 已處理。
+
+同批：`requirements-dev.txt` 的 `ruff` 下限 0.16 → 0.17（新鮮度檢查對 0.17.2 回 REVIEW UPDATE；`ruff check --select E9,F tools tests` 以 0.17.2 通過）。
