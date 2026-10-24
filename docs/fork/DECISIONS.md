@@ -189,3 +189,12 @@ exit 1，在 triage 做完之前這支檢查是紅的。這是真實狀態，不
 - 17 項 image focused unit tests 通過，涵蓋短頁、8000 CSS px 邊界、超限不 render／download、指定 maxHeight、安全上限、超寬、非法參數與成功／兩種失敗的還原。app 與 e2e typecheck 通過。
 - Chromium 使用既有 export-menu seedStore 一筆 `PNG-160-smoke` fixture：超高頁顯示明確錯誤且沒有 download／成功 toast；同一 fixture 改成安全尺寸後，下載 PNG 高度符合瀏覽器實際量測（包含文字溢出），尾端紅色像素為 `[255,0,0,255]`。其餘 3 個 export-menu 案例通過。首輪固定 400px 預期與第二輪固定 1000px 預期不符瀏覽器 layout；改成實際尺寸與尾端像素驗收後，只重跑該失敗案例，未重跑已通過的 186 項 app／40 項 Python 全套。
 - 此為本機未提交成果，仍需 fresh review、發布與 exact-SHA CI；普通堆疊卡片自動分張仍是上述另一項未採用功能缺口，不宣稱 issue 的所有功能要求皆已新增。
+
+## 2026-10-24：依賴安全修補（Dependabot #66–#68 與 audit 高／嚴重項）
+
+- Dependabot #66–#68（vite，`pnpm-lock.yaml`，launch-editor 三筆，修補版 8.3.3）：vite 是 vitest 的 peer（`autoInstallPeers`），pnpm 不會因 override 重解析既有 lock 的 peer，單靠 `pnpm update` 或 `overrides` 都留在 8.3.1。做法是在 `cli`／`next` 各加 `vite ^8.3.5` devDependency（vitest 4.1.12 的 `@vitest/mocker` 本身要求 peer `vite ^8.3.5`），lock 只剩 8.3.5。
+- 同批原始 `pnpm audit` 的其他項：`vitest` ^4.1.12（`@vitest/mocker` 4.1.12）、`dompurify` ^3.4.17、`undici` override 下限 `^6.29.1`、`next` 16.3.8 → 16.4.1（audit 列 2 critical + 1 high；官方版本說明 <https://github.com/vercel/next.js/releases/tag/v16.4.1>）、`happy-dom` ^20.9.0 → ^21.0.4（high，僅 next 測試環境 devDependency）。
+- 這些都是真依賴，沒有「parent 自帶 bundle」的情況：`pnpm why` 與 lock 的 resolution 都指向 registry 套件，修補後 lock 內舊版已不存在，因此不是只讓掃描器變綠。
+- 驗收：`pnpm install --frozen-lockfile`、guard、next／e2e typecheck、next 203 項測試、next build 通過；`tools\dev_check.ps1` 綠。`pnpm audit` 只剩 low 的 `cli`（見上一輪：workspace 名稱錯配，非真實依賴）。cli workspace 的 16 項測試在 Windows 本機與修補前基線同樣失敗（POSIX 路徑假設），CI 不跑 cli 測試。
+- 本機從 Git Bash 執行測試時 PATH 上的 GNU tar 會讓 `skills` 相關 16 項測試因 `C:` 路徑失敗，與依賴無關；把 `C:\Windows\System32` 放在 PATH 前面（bsdtar）即 203/203。
+- 未執行 Playwright 產品 e2e；由 PR 的 CI 驗證。
