@@ -11,6 +11,8 @@
  * one as a standalone HTML document so the deck viewer can render and
  * screenshot slides one-by-one.
  */
+import { escapeAttr } from "./html-attr";
+
 export type DeckSlide = {
   /** Standalone HTML doc (head + just-this-slide body) for srcdoc / screenshot */
   html: string;
@@ -46,10 +48,6 @@ export function isDeck(html: string): boolean {
 function pick(re: RegExp, src: string): string {
   const m = re.exec(src);
   return m ? m[1] : "";
-}
-
-function escapeAttr(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 }
 
 function decodeEntities(s: string): string {

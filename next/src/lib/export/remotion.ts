@@ -18,6 +18,7 @@
  */
 
 import type { HyperframesParsed, HyperFrame } from "@/lib/hyperframes";
+import { escapeAttr } from "../html-attr";
 import { downloadBlob } from "./image";
 
 const FPS = 30;
@@ -34,10 +35,6 @@ function slug(s: string, fallback: string): string {
     .replace(/^-+|-+$/g, "")
     .slice(0, 60);
   return out || fallback;
-}
-
-function escapeAttr(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");
