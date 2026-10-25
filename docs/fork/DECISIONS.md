@@ -213,4 +213,4 @@ exit 1，在 triage 做完之前這支檢查是紅的。這是真實狀態，不
 
 水位推到 `975fb3bcb98f1777781fb4c738902d36e32c8c46`／PR #162／issue #160。水位代表「已審查」，不代表 #162 已處理。
 
-同批：`requirements-dev.txt` 的 `ruff` 下限 0.16 → 0.17（新鮮度檢查對 0.17.2 回 REVIEW UPDATE；`ruff check --select E9,F tools tests` 以 0.17.2 通過）。
+同批原本把 `requirements-dev.txt` 的 `ruff` 下限 0.16 → 0.17 來消除新鮮度紅燈；這違反「不得靠提高下限消紅燈」，已改回 `ruff>=0.16  # freshness-hold: …`（`ruff check --select E9,F tools tests` 在 0.16.10 與 0.17.2 皆通過，程式不需要 0.17）。

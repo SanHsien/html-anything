@@ -1,2 +1,2 @@
 pytest>=9.1
-ruff>=0.17
+ruff>=0.16  # freshness-hold: ruff 0.17 adds nothing this repo needs; E9,F lint passes on 0.16.10 and 0.17.2
