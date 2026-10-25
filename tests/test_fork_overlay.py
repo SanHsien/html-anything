@@ -143,6 +143,26 @@ def test_missing_relative_rejects_path_escape() -> None:
     assert check_links._missing_relative(ROOT / "FORK.md", "NOTICE.md") is None
 
 
+def test_check_document_accepts_link_titles_and_ignores_code(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(check_links, "ROOT", tmp_path)
+    (tmp_path / "real.md").write_text("x", encoding="utf-8")
+    (tmp_path / "with space.md").write_text("x", encoding="utf-8")
+    doc = tmp_path / "doc.md"
+    lines = [
+        "[titled](real.md \"A title\") [single](real.md 'T') [spaced](<with space.md>)",
+        "```md",
+        "[example](no-such-file.md)",
+        "```",
+        "inline `[ex](also-missing.md)` text",
+        "[broken](missing.md)",
+    ]
+    doc.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    assert check_links.check_document(doc) == ["missing.md → 找不到 missing.md"]
+
+
 def test_agents_overlay_points_at_fork_rules() -> None:
     agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
 
