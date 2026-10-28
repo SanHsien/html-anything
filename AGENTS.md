@@ -39,3 +39,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - 修改維護工具或測試前，先跑對應 pytest；提交前跑 `pwsh -NoProfile -File tools\dev_check.ps1`。
 - `.env*`、API key、cookie、帳號資料與使用者生成的 HTML／PNG 一律不可提交。
 - 使用繁體中文，直接交付可驗證結果。
+
+## 路線圖
+
+- `ROADMAP.md` 是本 repo 後續工作的單一真相源。完成或新增工作時，在同一個 commit 更新它：做完的列刪掉、新工作加進去。不要在其他文件另列待辦。
