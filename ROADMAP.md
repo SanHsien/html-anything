@@ -1,16 +1,15 @@
 # 路線圖
 
 > 本 repo 後續工作的單一真相源。做完一項，就在同一個 commit 刪掉那一列；新工作只加在這裡。
-> 現況段的數字是 2026-10-29 依 `main` `0e6a5673cce2` 查的快照，開工前先重查 GitHub。
+> 現況段的數字是 2026-10-30 依 `main` 查的快照，開工前先重查 GitHub。
 
 ## 現況
-本 repo 是 html-anything（agentic HTML 編輯器與渲染平台）的維護 fork。`0e6a5673cce2` 上 CI、CodeQL、Fork maintenance、Upstream check 為 success，Dependabot 與 code scanning 告警 0 筆，Issues 停用、open PR 0 筆（2026-10-29 `gh` 查詢）。但 Dependabot `npm_and_yarn in /. for vite - Update` 在 2026-10-21 失敗 3 次（run 39534396371、39580268072、39581085662；Dependabot job #1641315781、#1642233351、#1642247854），`for source-map-js - Update` 在 2026-10-07 失敗 1 次（run 37601207401；job #1614936085），原因未查明。
+本 repo 是 html-anything（agentic HTML 編輯器與渲染平台）的維護 fork。CI、CodeQL、Fork maintenance、Upstream check 為 success，Dependabot 與 code scanning 告警 0 筆，Issues 停用、open PR 0 筆（2026-10-30 `gh` 查詢）。Dependabot 歷史 4 次失敗 run（vite run 39534396371、39580268072、39581085662；source-map-js run 37601207401）原因已查明並記錄於 `docs/fork/DECISIONS.md`（皆為 `security_update_not_possible`，已由本 fork 的依賴覆寫與 workspace devDependency 修復，目前 open alerts 為 0）。
 
 ## 近期：可以直接動手
 | 項目 | 為什麼 | 驗收方式 | 建議執行者 | 證據 |
 | --- | --- | --- | --- | --- |
 | 修 Windows 上中止 agent 只殺 cmd 殼、孫行程殘留 | `onAbort` 只呼叫 `child?.kill("SIGTERM")`；cross-spawn 在 Windows 啟動的是 cmd 殼，孫行程不會被一併結束 | win32 路徑改用 `taskkill /T /F /PID <pid>`（或等效的行程樹終止），其他平台維持現狀；新增 vitest：spawn 出孫行程、觸發 abort 後確認孫行程已不存在；在 `next/` 下 `npm test` 與 `npm run typecheck` 綠 | Claude Opus | `next/src/lib/agents/invoke.ts:339`；深掃報告（2026-10-26）「觀察」段 |
-| 查明 Dependabot vite／source-map-js 升級 job 失敗的原因 | 4 次失敗 run 沒有記錄原因，下次 Dependabot 開 PR 前不知道會不會再失敗 | `gh run view <run ID> --repo SanHsien/html-anything --log-failed` 讀完 39534396371、39580268072、39581085662、37601207401 四個 run，原因寫進 `docs/fork/DECISIONS.md`；之後 `gh run list --repo SanHsien/html-anything --limit 100 --json name,conclusion,createdAt` 中最新一筆 `npm_and_yarn` update 為 success，或 DECISIONS 寫明為何不處理 | Claude Sonnet | 2026-10-29 `gh` 查詢：run 39534396371、39580268072、39581085662、37601207401（Dependabot job #1641315781、#1642233351、#1642247854、#1614936085） |
 
 ## 中期：等條件成立再做
 | 項目 | 觸發條件 | 驗收方式 | 建議執行者 | 證據 |

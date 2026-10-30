@@ -214,3 +214,26 @@ exit 1，在 triage 做完之前這支檢查是紅的。這是真實狀態，不
 水位推到 `975fb3bcb98f1777781fb4c738902d36e32c8c46`／PR #162／issue #160。水位代表「已審查」，不代表 #162 已處理。
 
 同批原本把 `requirements-dev.txt` 的 `ruff` 下限 0.16 → 0.17 來消除新鮮度紅燈；這違反「不得靠提高下限消紅燈」，已改回 `ruff>=0.16  # freshness-hold: …`（`ruff check --select E9,F tools tests` 在 0.16.10 與 0.17.2 皆通過，程式不需要 0.17）。
+
+## 2026-10-30：查明 Dependabot 歷史升級失敗原因（vite 與 source-map-js 四個 run）
+
+**背景**：`ROADMAP.md` 列出歷史上 Dependabot `npm_and_yarn in /. for vite - Update` 失敗 3 次（run 39534396371、39580268072、39581085662；job #1641315781、#1642233351、#1642247854），`for source-map-js - Update` 失敗 1 次（run 37601207401；job #1614936085）。日誌未記錄失敗具體原因，本輪逐筆調閱失敗日誌查明並記錄。
+
+### 失敗日誌查明結果（`gh run view <run ID> --log-failed`）
+
+- **run 37601207401**（2026-10-07，job #1614936085，`source-map-js`）：
+  - 失敗類型：`security_update_not_possible`。
+  - 錯誤明細：`dependency-name: "source-map-js"`, `latest-resolvable-version: "1.2.1"`, `lowest-non-vulnerable-version: "1.2.2"`。
+  - 原因：`source-map-js` 當時為間接依賴，Dependabot updater 無法在既有 `pnpm-lock.yaml` 解析邊界下自動跨過 1.2.1 安裝修復版 1.2.2。
+  - 後續處理：維護者已於 2026-10-10 在 `pnpm-workspace.yaml` 加入 `source-map-js: ^1.2.2` 覆寫（見本檔 2026-10-10 段），lock 內舊版已被完全取代。
+- **run 39534396371**、**run 39580268072**、**run 39581085662**（2026-10-21，job #1641315781、#1642233351、#1642247854，`vite`）：
+  - 失敗類型：`security_update_not_possible`。
+  - 錯誤明細：`dependency-name: "vite"`, `latest-resolvable-version: "8.3.1"`, `lowest-non-vulnerable-version: "8.3.3"`。
+  - 原因：Dependabot 嘗試修補 Dependabot alert #66（CVE-2026-112943）、#67（CVE-2026-112944）、#68（CVE-2026-112942），要求 `vite >= 8.3.3`。日誌顯示 job 設定為 `allowed-updates: dependency-type: direct` 與 `update-subdependencies: false`，`conflicting-dependencies: []`；當時 `vite` 不是任何工作區的直接依賴（經由 `vitest` / `@vitest/mocker` 帶入），所以 Dependabot 不會改動它，解析結果停在 8.3.1，3 次重試皆報 `security_update_not_possible`。（「peer dependency 未被重新解析」是推論，日誌沒有直接寫出。）
+  - 後續處理：維護者已於 2026-10-24 在 `cli` 與 `next` 工作區明確加入 `vite ^8.3.5` devDependency（見本檔 2026-10-24 段），使 lock 內 `vite` 唯一解析為 8.3.5，GitHub Dependabot alerts #66–#68 狀態已轉為 fixed。
+
+### 遠端現況與不另開更新之理由
+
+- 執行 `gh api repos/SanHsien/html-anything/dependabot/alerts?state=open` 確認目前 open alerts 為 0 筆。
+- `gh run list --repo SanHsien/html-anything --limit 100 --json name,conclusion,createdAt` 中最新的 `npm_and_yarn` run 停留在 2026-10-21 的上述失敗 run。理由是 Dependabot 安全更新僅在有未修復安全漏洞時觸發；由於上述漏洞已由 2026-10-10 與 2026-10-24 的維護提交在 `main` 徹底修復，GitHub 自動關閉通告，不再派發安全更新任務。
+- 一般依賴更新則按 `.github/dependabot.yml` 排程（每週一 06:00 Asia/Taipei）運行，故無需人為觸發無實質更新的 dummy job。
