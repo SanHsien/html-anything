@@ -1,4 +1,5 @@
 import type { ChildProcessWithoutNullStreams } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import crossSpawn from "cross-spawn";
 import { resolveOnPath, resolveOpenclawAgentId, AGENTS } from "./detect";
@@ -83,6 +84,22 @@ export type InvokeEvent =
   | { type: "raw"; text: string }
   | { type: "done"; code: number | null }
   | { type: "error"; message: string };
+
+export function killProcessTree(child: Pick<ChildProcessWithoutNullStreams, "pid" | "kill" | "exitCode" | "signalCode">): void {
+  // A finished child's PID may already belong to another process; /F /T would hit that tree.
+  if (child.exitCode !== null || child.signalCode !== null) return;
+  try {
+    if (process.platform === "win32" && typeof child.pid === "number") {
+      spawnSync("taskkill", ["/F", "/T", "/PID", String(child.pid)], {
+        stdio: "ignore",
+        windowsHide: true,
+        timeout: 5000,
+      });
+    } else {
+      child.kill("SIGTERM");
+    }
+  } catch {}
+}
 
 export function invokeAgent(opts: InvokeOpts): ReadableStream<InvokeEvent> {
   const def = AGENTS.find((a) => a.id === opts.agent);
@@ -267,6 +284,9 @@ export function invokeAgent(opts: InvokeOpts): ReadableStream<InvokeEvent> {
       });
 
       activeChild.on("close", (code) => {
+        // Detach the abort listener so a late abort doesn't call
+        // killProcessTree on a recycled PID.
+        if (onAbort) opts.signal?.removeEventListener("abort", onAbort);
         flushStderr();
         if (opts.agent === "openclaw") {
           // OpenClaw's `agent --local --json` emits one pretty-printed JSON
@@ -335,9 +355,7 @@ export function invokeAgent(opts: InvokeOpts): ReadableStream<InvokeEvent> {
       });
 
       const onAbort = () => {
-        try {
-          child?.kill("SIGTERM");
-        } catch {}
+        if (child) killProcessTree(child);
         flushStderr();
         safeClose();
       };
