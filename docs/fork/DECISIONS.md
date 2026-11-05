@@ -237,3 +237,10 @@ exit 1，在 triage 做完之前這支檢查是紅的。這是真實狀態，不
 - 執行 `gh api repos/SanHsien/html-anything/dependabot/alerts?state=open` 確認目前 open alerts 為 0 筆。
 - `gh run list --repo SanHsien/html-anything --limit 100 --json name,conclusion,createdAt` 中最新的 `npm_and_yarn` run 停留在 2026-10-21 的上述失敗 run。理由是 Dependabot 安全更新僅在有未修復安全漏洞時觸發；由於上述漏洞已由 2026-10-10 與 2026-10-24 的維護提交在 `main` 徹底修復，GitHub 自動關閉通告，不再派發安全更新任務。
 - 一般依賴更新則按 `.github/dependabot.yml` 排程（每週一 06:00 Asia/Taipei）運行，故無需人為觸發無實質更新的 dummy job。
+
+## 2026-11-05：保留 pytest 相容下限，以政策 hold 處理新鮮度
+
+- 新鮮度檢查只讀 `requirements-dev.txt`；首次 strict 檢查 exit 1，pytest 宣告 9.1、PyPI 現行 9.2.0，ruff 宣告 0.16、現行 0.17.3（已有 hold）。沒有既有 dependency-deferrals.json。
+- 裁決 (b)：保留 `pytest>=9.1`，行末補 `freshness-hold`；這是持續支援 9.1 的相容政策，不是延期安裝 9.2。無上限的宣告仍允許現行版；測試開始使用新版專屬 API 或設定時重新評估。不得僅為消除新鮮度告警提高下限。官方版本說明：<https://docs.pytest.org/en/stable/announce/release-9.2.0.html>。
+- ruff 延用 2026-10-24 的 (b) 裁決，不提高 0.16 下限；本輪以現行 0.17.3 通過 E9,F，既有 0.16.10 相容證據仍見前文。
+- 驗收：pytest 9.1.0 與現行 9.2.0 各跑 `pwsh -NoProfile -File tools/dev_check.ps1`，均通過 37 項測試、E9,F、compileall 與 13 份文件連結；修改後 strict 新鮮度 exit 0，兩項均為 HELD。工具與測試程式、產品依賴及 workflow 均未修改。

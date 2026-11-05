@@ -21,6 +21,7 @@
 | 不做什麼 | 理由 | 什麼情況下重新考慮 |
 | --- | --- | --- |
 | 補強 `tools/check_links.py` 的剩餘小缺口（未閉合 fence、雙反引號行內碼） | 深掃報告（2026-10-26）列為審查員備註：只會少檢查、不會誤報 | 文件出現這些寫法 |
+| 僅為新鮮度提高 `requirements-dev.txt` 的 pytest 9.1 下限 | 保留已驗證的相容範圍；9.1.0 與現行 9.2.0 均通過 fork gate，以 `freshness-hold` 記錄政策，仍允許安裝新版 | 測試開始使用 pytest 9.2 以上專屬 API 或設定時 |
 | 把 `requirements-dev.txt` 的 ruff 下限從 0.16 提高 | 程式不需要 0.17；`ruff check --select E9,F tools tests` 在 0.16.10 與 0.17.2 皆通過，已以 `freshness-hold` 標註（`requirements-dev.txt:2`、`docs/fork/DECISIONS.md:216`） | 程式需要只有 ruff 0.17 以上才有的規則或設定 |
 
 ## 維護方式
