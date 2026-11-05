@@ -12,7 +12,9 @@ permissions:
 jobs:
   public-checks:
     name: Public checks
-    runs-on: ubuntu-latest
+    # Fork: ubuntu-latest moved to 26.04; Playwright 1.60 refuses to install
+    # chromium there (fork DECISIONS 2026-11-06). 24.04 is still supported.
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout

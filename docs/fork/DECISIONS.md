@@ -244,3 +244,9 @@ exit 1，在 triage 做完之前這支檢查是紅的。這是真實狀態，不
 - 裁決 (b)：保留 `pytest>=9.1`，行末補 `freshness-hold`；這是持續支援 9.1 的相容政策，不是延期安裝 9.2。無上限的宣告仍允許現行版；測試開始使用新版專屬 API 或設定時重新評估。不得僅為消除新鮮度告警提高下限。官方版本說明：<https://docs.pytest.org/en/stable/announce/release-9.2.0.html>。
 - ruff 延用 2026-10-24 的 (b) 裁決，不提高 0.16 下限；本輪以現行 0.17.3 通過 E9,F，既有 0.16.10 相容證據仍見前文。
 - 驗收：pytest 9.1.0 與現行 9.2.0 各跑 `pwsh -NoProfile -File tools/dev_check.ps1`，均通過 37 項測試、E9,F、compileall 與 13 份文件連結；修改後 strict 新鮮度 exit 0，兩項均為 HELD。工具與測試程式、產品依賴及 workflow 均未修改。
+
+## 2026-11-06：Public checks 改釘 `ubuntu-24.04`
+
+- 現象：`ubuntu-latest` 換成 Ubuntu 26.04（runner image `ubuntu26/20261101.186`）後，`Install Playwright browser` 步驟失敗：`Playwright does not support chromium on ubuntu26.04-x64`（`e2e` 鎖定的 `@playwright/test` 為 1.60.0）。11-02 在 24.04 映像上同一步驟通過。
+- 裁決：`public-checks` job 改釘 `ubuntu-24.04`，不改測試、不跳過 E2E。這是 runner 相容性處理，與產品依賴無關。
+- 重審條件：升級 `@playwright/test` 到官方支援 Ubuntu 26.04 的版本後，改回 `ubuntu-latest` 並以 CI 驗證；或 GitHub 宣布 `ubuntu-24.04` 退役時。
