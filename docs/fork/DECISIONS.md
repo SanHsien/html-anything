@@ -250,3 +250,10 @@ exit 1，在 triage 做完之前這支檢查是紅的。這是真實狀態，不
 - 現象：`ubuntu-latest` 換成 Ubuntu 26.04（runner image `ubuntu26/20261101.186`）後，`Install Playwright browser` 步驟失敗：`Playwright does not support chromium on ubuntu26.04-x64`（`e2e` 鎖定的 `@playwright/test` 為 1.60.0）。11-02 在 24.04 映像上同一步驟通過。
 - 裁決：`public-checks` job 改釘 `ubuntu-24.04`，不改測試、不跳過 E2E。這是 runner 相容性處理，與產品依賴無關。
 - 重審條件：升級 `@playwright/test` 到官方支援 Ubuntu 26.04 的版本後，改回 `ubuntu-latest` 並以 CI 驗證；或 GitHub 宣布 `ubuntu-24.04` 退役時。
+
+## 2026-11-07：`safeProjectLabel` 去掉頭尾 `-` 改用逐字元掃描
+
+- 現象：CodeQL #38（`js/polynomial-redos`，high）指向 `next/src/lib/deploy/vercel.ts` 的 `.replace(/^-+|-+$/g, "")`，這段程式從上游原樣帶進來。
+- 裁決：改成 `trimDashes()` 從頭尾逐字元掃描，輸出規則不變：小寫、連續 `-` 合併成一個、截到 80 字、頭尾不留 `-`、什麼都不剩就用隨機名稱。新增 `next/src/lib/deploy/__tests__/vercel-name.test.ts` 釘住這些規則，並測 10 萬個 `-` 的輸入要在 1 秒內完成。前例是 2026-08-28 把 marketplace id 驗證改成拆解、不用單一 regex；這次同樣不碰產品契約，不送上游。
+- 驗證：本機 vitest 4 條全過，`tsc --noEmit` 通過，`tools\dev_check.ps1` 綠。CodeQL 告警不手動關閉，等下次掃描自動結案。
+- 重審條件：上游自己改了這個函式時，改採上游版本。

@@ -158,15 +158,23 @@ async function pollVercelDeployment(
   return last;
 }
 
+// Trim with index scans, not /^-+|-+$/: CodeQL flags that alternation as
+// polynomial ReDoS (js/polynomial-redos) on long dash runs.
+function trimDashes(value: string): string {
+  let start = 0;
+  let end = value.length;
+  while (start < end && value[start] === "-") start += 1;
+  while (end > start && value[end - 1] === "-") end -= 1;
+  return value.slice(start, end);
+}
+
 function safeProjectLabel(raw: string, maxLength: number): string {
-  return String(raw)
+  const collapsed = String(raw)
     .normalize("NFKD")
     .toLowerCase()
     .replace(/[^a-z0-9-]/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, maxLength)
-    .replace(/-+$/g, "");
+    .replace(/-+/g, "-");
+  return trimDashes(trimDashes(collapsed).slice(0, maxLength));
 }
 
 export function safeVercelProjectName(raw: string): string {
