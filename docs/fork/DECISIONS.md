@@ -257,3 +257,57 @@ exit 1，在 triage 做完之前這支檢查是紅的。這是真實狀態，不
 - 裁決：改成 `trimDashes()` 從頭尾逐字元掃描，輸出規則不變：小寫、連續 `-` 合併成一個、截到 80 字、頭尾不留 `-`、什麼都不剩就用隨機名稱。新增 `next/src/lib/deploy/__tests__/vercel-name.test.ts` 釘住這些規則，並測 10 萬個 `-` 的輸入要在 1 秒內完成。前例是 2026-08-28 把 marketplace id 驗證改成拆解、不用單一 regex；這次同樣不碰產品契約，不送上游。
 - 驗證：本機 vitest 4 條全過，`tsc --noEmit` 通過，`tools\dev_check.ps1` 綠。CodeQL 告警不手動關閉，等下次掃描自動結案。
 - 重審條件：上游自己改了這個函式時，改採上游版本。
+
+## 2026-11-10：上游審查至 PR #207／issue #188（commit 0 筆、PR 38 筆、issue 6 筆）
+
+起點：`Upstream check` 2026-11-09 failure。`python tools/check_upstream_updates.py --strict` 回 exit 1，commit 軸 `975fb3b` behind 0，PR 軸 38 筆（#163 至 #207，缺 #164、#166、#170、#178、#186、#188 這幾個 issue 號）、issue 軸 6 筆（#164、#166、#170、#178、#186、#188）。`git ls-remote upstream refs/heads/main` 仍是 `975fb3bcb98f1777781fb4c738902d36e32c8c46`，所以沒有任何東西經 commit 軸抵達。
+
+### PR 軸分佈（`gh api repos/nexu-io/html-anything/pulls` 實查，base 分支分類）
+
+| base | 數量 | 狀態 | 項目 |
+| --- | --- | --- | --- |
+| `main` | 3 | 2 open、1 draft | #163、#165、#167 |
+| `feature/motion` | 25 | 16 merged、7 open、1 draft、1 closed 未合併 | #168、#169、#171、#172、#174、#175、#176、#177、#179–#184、#187、#189、#191、#193、#196、#198–#200、#202、#205、#206 |
+| `refactor/odsuite` | 9 | 8 merged、1 open | #185、#190、#192、#194、#195、#201、#203、#204、#207 |
+| `optimize-readme-56f71a6f` | 1 | open | #173 |
+
+「merged」是合進上游的**非 main 分支**；`main` 沒動。`feature/motion` 與 `refactor/odsuite` 是 OpenMotion 影片編輯器（`studio/`、`web/`、`template-library/`、`packages/`、`apps/`、`suites/`）的開發線，不是 html-anything 產品。
+
+### 逐項結論
+
+| 項目 | 結論 | 證據 |
+| --- | --- | --- |
+| #163 Hermes adapter（open，base `main`，head `7947d4830bd626abc83f503404828386215975fd`） | **延後** | 完整 5 檔 diff 已讀（`argv.ts`、`detect.ts`、`invoke.ts` 與兩個測試，+71/−16）。把 `hermes` 從 `acp`（不可呼叫）改成 `argv`：`buildArgv` 回 `["-z", ...model]`，stdout 當純文字 delta。`invoke.ts` 那段「`.exe` 不走 shell」的修正對本 fork 無效：本 fork 的 `invoke.ts` 已用 `cross-spawn`、`shell: false`（見 2026-10-10 #161 條目）。本機 `hermes --help` 確認 `-z, --oneshot PROMPT` 存在（v0.23.0），但 PR 未合併，且新增 adapter 需要真實 `hermes -z` 端到端驗收，不為此啟動外部模型。**重看條件**：上游合併到 `main` 經 commit 軸抵達時，逐檔對照 `activeChild` 與 `cross-spawn` 後採用 |
+| #165 README roadmap／status 同步（open，base `main`，head `18aa8fc24cac8325436247dc4e6123461d99ebd9`） | **延後** | 完整 2 檔 diff 已讀（`README.md`、`README.zh-CN.md`，各 +7/−7），只改 Roadmap 與 Status 表的勾選與狀態字樣，不含程式碼。其中「Skill marketplace ✅ stable — Windows GNU tar」一句對應 issue #164，本 fork 已另行修掉（見下）。**重看條件**：合併到 `main` 後隨 commit 軸抵達，保留頂部 overlay 採用 |
+| #167 把 OpenMotion 搬到 repo root（draft，base `main`，head `3e67e29c1ee6955841f6763f4acb69933c718390`，head 分支就是 `feature/motion`） | **不採用，高風險監看** | GitHub files API 在 3000 檔截斷（api 回報 +365322/−56695；`studio/` 1859、`web/` 521、`next/` 314、`docs/` 59）。與本 fork 檔重疊 357 個，包含 `.gitattributes`、`.github/workflows/ci.yml`、`.gitignore`、`AGENTS.md`。這是以另一個產品取代 `main` 的根目錄，與 issue #166「standalone OpenMotion replacing the existing application at the repository root」一致。若合併，`next/`、`e2e/`、`cli/`、`scripts/guard.ts` 都會被改寫。**重看條件**：#167 或其 head 合併進 `main`（commit 軸出現大量變更，或 `reviewed_through` 後 `git ls-remote` 的 `main` 移動）時，不得用 cherry-pick 慣例逐檔處理，先決定本 fork 要不要跟進（fork 可以停在 `975fb3b`），再動 `AGENTS.md`、CI 與 guard |
+| #168、#169、#171、#172、#174、#175、#176、#179–#184、#187、#189、#191、#193、#196、#198–#200、#202、#205、#206（`feature/motion`） | **不採用** | base 不是 `main`，`main` 沒有這些內容。檔案清單與新增行逐一掃描：只動 `studio/`、`web/`、`skills/`（OpenMotion 的 Skill）、`docs/`、`tests/`、`scripts/`、`.github/` 與根目錄的 OpenMotion 檔案。與本 fork 產品檔（`next/src/lib/` 的分歧檔）零重疊；與本 fork 同名檔的重疊只有 `AGENTS.md`、`CONTRIBUTING*.md`、`README.zh-CN.md`、`.github/workflows/ci.yml`、`package.json`、`.gitignore`，而這些檔在 `feature/motion` 上指的是 OpenMotion 的版本。#183 closed 未合併 |
+| #185、#190、#192、#194、#195、#201、#203、#204、#207（`refactor/odsuite`） | **不採用** | 同上，base 不是 `main`。#185 是 3000 檔截斷的 odsuite 搬遷（api 回報 +46986/−365639），其餘是 `packages/`、`apps/`、`suites/` 內的小改。與 `next/` 零重疊；只有 `AGENTS.md`、`pnpm-lock.yaml`、`CONTRIBUTING.md`、`.github/workflows/ci.yml` 同名 |
+| #173（base `optimize-readme-56f71a6f`）、#177（base `feature/motion`，head 同名分支） | **不採用** | #173 +3377/−2885、136 檔（`docs/` 73、`examples/` 58），#177 +191835/−449、470 檔（`library/` 210、`docs/` 184、`template-library/` 52）。兩者是 OpenMotion 的 README／範例庫提案，#177 內另有 `README.REVERSE-ENGINEERING.md` 自述為替代 README 提案。與 `next/` 零重疊 |
+
+隱藏內容掃描（對所有 PR 的 files API patch 之**新增行**）：零寬字元（`U+200B`–`U+200F`、`U+202A`–`U+202E`、`U+2060`–`U+2064`、`U+FEFF`）、`ignore previous／prior` 類提示注入字樣、`curl|bash`、`iwr|iex`、`dangerously` 旗標。結果：新增行只有三類命中，沒有隱藏指令；HTML 註解（`<!-- ... -->`）都是 OpenMotion 範例 HTML 與測試夾具的一般註解。命中的三類：#167 新增行含 2 個 `U+200D`（零寬連接符），上下文是 emoji 組合序列，不是隱藏文字；#168 `README.zh-CN.md` 一行安裝說明 `curl -fsSL https://raw.githubusercontent.com/nexu-io/html-anything/feature/motion/install.sh | bash`（文件文字，指向 `feature/motion` 的安裝器，未執行、未採用）；#185 `suites/guard/tests/style.test.ts` 一個測試字串 `dangerouslySetInnerHTML`（guard 測試夾具）。#167 與 #185 的 files API 被 GitHub 截在 3000 檔，截斷之後的檔案**未掃描**；#163、#165 為整份 `gh pr diff` 逐行閱讀，其餘為 files API 的 patch 加腳本掃描，不是逐行閱讀。
+
+### 開 PR 的 head（讀取當時）
+
+open 的 13 筆：#163 `7947d4830bd626abc83f503404828386215975fd`、#165 `18aa8fc24cac8325436247dc4e6123461d99ebd9`、#167 `3e67e29c1ee6955841f6763f4acb69933c718390`、#173 `31377f82cf93041cc59b6fcbfb2883e1a8e77ad7`、#175 `ffc9529581646a542ea2da9e9690171b367b4593`、#177 `8f34715ef74e8eb85fc84218dbe0efd9689ee832`、#180 `a09c5d2c4e5aa5c2d4a9487b7fc0dddb4fa4415f`、#193 `73ab4be0b0b55809cb14a7e2eed50efb67abe12b`、#198 `0b0d2abad3b7a3972eae2cdf790bf8b9e0fe99a2`、#202 `f54e609ad45d371bed0d4b5dde53c9fce50b9cfd`、#205 `b69eeab8dab7cec93496077a71a2e24476e68da4`、#206 `81694fa389eefc7b722ccf30c2ccb779bff05fe5`、#207 `40e8602193476e3c67fa4e06dab531aa33324be4`。
+
+### Issue 軸（6 筆）
+
+| 項目 | 結論 | 證據 |
+| --- | --- | --- |
+| #164 Windows 上 GNU tar 優先時 marketplace 安裝失敗（open，0 則留言） | **移植（本 fork 自行修，不等上游）** | 在本 fork 重現：`next/src/lib/skills/install.ts` 的 `extractTarball` 把 Windows 絕對路徑 `C:\…` 當 `tar -xzf` 的檔案運算元交給 `spawn("tar", …)`，GNU tar（Git for Windows，本機 PATH 上第一個）把 `C:` 當遠端主機，報 `Cannot connect to C: resolve failed`。2026-10-24 已記過「Git Bash 的 GNU tar 讓 16 項 skills 測試失敗，與依賴無關」，當時當成跑法問題；實際上那是產品缺陷，只是測試夾具也踩到同一個坑所以沒人在 CI 以外的環境看到它。修法見下 |
+| #166 搬遷 OpenMotion 到 repo root | 不採用 | 對應 PR #167，見上 |
+| #170 共享已發佈的 Motion 範本目錄（closed） | 不採用 | `feature/motion` 工作，對應 #171、#181、#200 |
+| #178 Motion 編輯器 11 語系 | 不採用 | `feature/motion`，對應 #179 |
+| #186 Motion 完整 npm 測試套件 | 不採用 | `feature/motion`，對應 #187、#205 |
+| #188 Motion 預設開啟的分析與 GeoIP | 不採用 | `feature/motion`，對應 #189。**重看條件**：若 #167 合併進 `main` 而本 fork 決定跟進，預設開啟的遙測（PostHog、粗略 GeoIP）要先決定是否採用，不隨根目錄替換一起帶入 |
+
+### #164 的移植：先紅後綠
+
+- 新增 `next/src/lib/skills/__tests__/install-drive-path.test.ts`，名稱「extracts a tarball without handing tar a drive-letter archive path」。tarball 用既有 `ustar.ts` 在行程內組出，不呼叫系統 tar，所以唯一的 tar 呼叫就是被測的 `extractTarball`。
+- 修前（`tar --version` = GNU tar 1.35，在 PATH 第一個）：`pnpm -F @html-anything/next exec vitest run src/lib/skills/__tests__/install-drive-path.test.ts` 失敗，`InstallError: tar exited 2: tar (child): Cannot connect to C: resolve failed`。
+- 修法：`extractTarball` 以 `cwd: path.dirname(tarPath)` 啟動，檔案運算元只傳 `path.basename(tarPath)`；`-C` 目標目錄不是 `host:path` 運算元，維持絕對路徑。沒有用 `--force-local`，因為 bsdtar 不認得這個旗標。
+- 同一個坑也在五個測試的夾具建檔（`api`、`cross-device`、`install-rejections`、`install`、`preflight`）：`spawn("tar", ["-czf", outPath, …])`。一併改成同樣的 `cwd` 加檔名寫法，否則這五個檔在 GNU tar 優先的環境永遠紅（修前 `src/lib/skills` 共 16 項失敗）。
+- 修後：GNU tar 優先與 `C:\Windows\System32`（bsdtar 3.8.9）優先兩種 PATH，`src/lib/skills` 都是 9 個檔、58 項測試全過。
+- 更新 `ROADMAP.md` 維護方式那一行：原本寫「Git Bash 下 GNU tar 不認 `C:` 路徑，屬跑法問題」，現在錯了。
+
+水位推到 PR #207、issue #188、`reviewed_date` 2026-11-10；`reviewed_through` 維持 `975fb3bcb98f1777781fb4c738902d36e32c8c46`（commit 軸沒有新東西）。水位代表「已審查」，不代表 #163、#165 已採用。

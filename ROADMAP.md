@@ -26,4 +26,4 @@
 
 ## 維護方式
 - 每週由 `Upstream check` 排程檢查上游；轉 failure 或有新 commit 時人工審查再移植。
-- 程式變更須通過 `next/` 下的 `npm test`（vitest）、`npm run typecheck`（tsc）與根目錄 `pytest`；請在 PowerShell 跑 vitest，Git Bash 下 GNU tar 不認 `C:` 路徑，會讓 skills 測試失敗，屬跑法問題（深掃報告 2026-10-26）。
+- 程式變更須通過 `next/` 下的 `npm test`（vitest）、`npm run typecheck`（tsc）與根目錄 `pytest`；skills 的 tar 解包與測試夾具已改成不把 `C:` 路徑交給 GNU tar，Git Bash 與 PowerShell 都能跑（見 `docs/fork/DECISIONS.md` 2026-11-10 上游審查段）。

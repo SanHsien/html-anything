@@ -89,3 +89,10 @@ README 衝突的解法：保留頂部 overlay，把上游新產品說明留在�
 
 - commit：4 筆（#142、#135、#94、#149）採用，因無共同祖先改用 cherry-pick；PR 水位 **#162**（#162 未合併、不採用）、issue 水位 **#160**（無新項目）。
 - 詳見 [`DECISIONS.md`](DECISIONS.md) 2026-10-24 條目。
+
+## 2026-11-10：第四輪 triage 完成，PR 水位 #207、issue 水位 #188
+
+- commit：0 筆，`reviewed_through` 維持 `975fb3b`。
+- PR 38 筆：35 筆 base 是 `feature/motion`、`refactor/odsuite` 或其衍生分支（OpenMotion 開發線），`main` 沒有這些內容，不採用；#163（Hermes adapter）與 #165（README 同步）是 open 且 base 為 `main`，延後到合併後經 commit 軸抵達；#167 是把 `main` 根目錄換成 OpenMotion 的 draft，列為高風險監看。
+- issue 6 筆：#164（Windows GNU tar 解包失敗）在本 fork 重現並已修，其餘 5 筆屬 OpenMotion。
+- 詳見 [`DECISIONS.md`](DECISIONS.md) 2026-11-10 條目。上游此後若出現 `main` 的大量 commit，先讀該條目 #167 的重看條件。
