@@ -33,7 +33,7 @@ async function tarGzDir(dir: string, outPath: string): Promise<void> {
   await new Promise<void>((resolve, reject) => {
     const parent = path.dirname(dir);
     const base = path.basename(dir);
-    const proc = spawn("tar", ["-czf", outPath, "-C", parent, base]);
+    const proc = spawn("tar", ["-czf", path.basename(outPath), "-C", parent, base], { cwd: path.dirname(outPath) });
     let stderr = "";
     proc.stderr.on("data", (c) => {
       stderr += c.toString();

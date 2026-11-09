@@ -243,9 +243,15 @@ async function extractTarball(tarPath: string, destDir: string): Promise<void> {
   await new Promise<void>((resolve, reject) => {
     // `--strip-components=1` drops the `<repo>-<sha>/` wrapper directory
     // GitHub adds. `--no-same-owner` keeps perms sane on shared boxes.
-    const proc = spawn("tar", ["-xzf", tarPath, "-C", destDir, "--strip-components=1", "--no-same-owner"], {
-      stdio: ["ignore", "ignore", "pipe"],
-    });
+    // The archive operand is passed as a bare file name with `cwd` set to its
+    // directory: GNU tar (Git for Windows) reads a leading `C:` in `-f` as a
+    // remote `host:path` and fails with "Cannot connect to C: resolve failed".
+    // `--force-local` is not an option because bsdtar rejects it.
+    const proc = spawn(
+      "tar",
+      ["-xzf", path.basename(tarPath), "-C", destDir, "--strip-components=1", "--no-same-owner"],
+      { cwd: path.dirname(tarPath), stdio: ["ignore", "ignore", "pipe"] },
+    );
     let stderr = "";
     proc.stderr.on("data", (chunk) => {
       stderr += chunk.toString();

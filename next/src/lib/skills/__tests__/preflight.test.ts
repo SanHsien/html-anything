@@ -116,7 +116,9 @@ describe("tarball preflight", () => {
     );
     const tarballPath = path.join(tmpRoot, "fixtures", "happy.tar.gz");
     await new Promise<void>((resolve, reject) => {
-      const proc = spawn("tar", ["-czf", tarballPath, "-C", path.dirname(wrapper), path.basename(wrapper)]);
+      const proc = spawn("tar", ["-czf", path.basename(tarballPath), "-C", path.dirname(wrapper), path.basename(wrapper)], {
+        cwd: path.dirname(tarballPath),
+      });
       proc.on("error", reject);
       proc.on("close", (code) => (code === 0 ? resolve() : reject(new Error(`tar exit ${code}`))));
     });
