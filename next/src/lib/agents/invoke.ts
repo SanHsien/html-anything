@@ -4,6 +4,7 @@ import { existsSync } from "node:fs";
 import crossSpawn from "cross-spawn";
 import { resolveOnPath, resolveOpenclawAgentId, AGENTS } from "./detect";
 import {
+  agentStderrLineNeedsRedaction,
   buildArgv,
   envFor,
   makeParser,
@@ -84,6 +85,13 @@ export type InvokeEvent =
   | { type: "raw"; text: string }
   | { type: "done"; code: number | null }
   | { type: "error"; message: string };
+
+/**
+ * Codex stderr is split into lines so diagnostics can be sanitized. A line
+ * that never ends (progress bars that only use `\r`) is flushed in slices of
+ * this size instead of growing without bound until the process exits.
+ */
+export const STDERR_FLUSH_BYTES = 64 * 1024;
 
 export function killProcessTree(child: Pick<ChildProcessWithoutNullStreams, "pid" | "kill" | "exitCode" | "signalCode">): void {
   // A finished child's PID may already belong to another process; /F /T would hit that tree.
@@ -180,6 +188,14 @@ export function invokeAgent(opts: InvokeOpts): ReadableStream<InvokeEvent> {
       // an explicit `--message <text>` flag.
       if (promptViaMessageFlag) argv = [...argv, "--message", opts.prompt];
 
+      // The openclaw agent-id probe above is awaited, so the request may have
+      // been cancelled meanwhile. An already-aborted signal never fires a
+      // listener attached later, so check before spawning anything.
+      if (opts.signal?.aborted) {
+        safeClose();
+        return;
+      }
+
       try {
         // cross-spawn resolves Windows .cmd/.bat shims without placing the
         // prompt or other argv values in a command shell.
@@ -225,8 +241,15 @@ export function invokeAgent(opts: InvokeOpts): ReadableStream<InvokeEvent> {
 
       let stdoutBuf = "";
       let stderrBuf = "";
+      // Set after a partial line that needed redaction was force-flushed; the
+      // remainder of that line (which may hold the redacted body) is dropped.
+      let dropRestOfStderrLine = false;
       const flushStderr = () => {
         if (!stderrBuf) return;
+        if (dropRestOfStderrLine) {
+          stderrBuf = "";
+          return;
+        }
         safeEnqueue({
           type: "stderr",
           text: sanitizeAgentStderrLine(opts.agent, stderrBuf),
@@ -271,10 +294,22 @@ export function invokeAgent(opts: InvokeOpts): ReadableStream<InvokeEvent> {
         while ((nl = stderrBuf.indexOf("\n")) !== -1) {
           const line = stderrBuf.slice(0, nl);
           stderrBuf = stderrBuf.slice(nl + 1);
+          if (dropRestOfStderrLine) {
+            dropRestOfStderrLine = false;
+            safeEnqueue({ type: "stderr", text: "\n" });
+            continue;
+          }
           safeEnqueue({
             type: "stderr",
             text: `${sanitizeAgentStderrLine(opts.agent, line)}\n`,
           });
+        }
+        while (stderrBuf.length > STDERR_FLUSH_BYTES) {
+          const part = stderrBuf.slice(0, STDERR_FLUSH_BYTES);
+          stderrBuf = stderrBuf.slice(STDERR_FLUSH_BYTES);
+          if (dropRestOfStderrLine) continue;
+          safeEnqueue({ type: "stderr", text: sanitizeAgentStderrLine(opts.agent, part) });
+          if (agentStderrLineNeedsRedaction(opts.agent, part)) dropRestOfStderrLine = true;
         }
       });
 

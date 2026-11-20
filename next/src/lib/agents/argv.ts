@@ -150,6 +150,15 @@ const CODEX_MODEL_REFRESH_DIAGNOSTIC =
   'codex_models_manager::manager: failed to refresh available models';
 const RESPONSE_BODY_MARKER = '; body: ';
 
+/**
+ * True when `line` (or the start of a line) carries the codex model-refresh
+ * diagnostic whose response body {@link sanitizeAgentStderrLine} redacts.
+ * Callers that flush a partial line must drop the rest of that line.
+ */
+export function agentStderrLineNeedsRedaction(agent: string, line: string): boolean {
+  return agent === 'codex' && line.includes(CODEX_MODEL_REFRESH_DIAGNOSTIC);
+}
+
 export function sanitizeAgentStderrLine(agent: string, line: string): string {
   if (agent !== 'codex' || !line.includes(CODEX_MODEL_REFRESH_DIAGNOSTIC)) {
     return line;
