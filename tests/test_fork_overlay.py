@@ -123,6 +123,42 @@ def test_link_checker_does_not_treat_info_string_fence_as_closing(tmp_path: Path
     assert any("missing-prose-target.md" in p for p in problems)
 
 
+@pytest.mark.parametrize(
+    ("opener", "closer"),
+    [("```", "````"), ("~~~", "~~~~~"), ("````", "````"), ("```", "```  ")],
+)
+def test_link_checker_accepts_longer_or_equal_closing_fence(
+    tmp_path: Path, opener: str, closer: str
+) -> None:
+    # CommonMark: the closer repeats the opener's character at least as many
+    # times, followed only by whitespace. Missing that leaves the block open,
+    # swallowing the prose link below it until the next fence.
+    doc = tmp_path / "doc.md"
+    doc.write_text(
+        f"{opener}\n[in-code](ignored-target.md)\n{closer}\n\n"
+        "[prose](missing-prose-target.md)\n\n```\nc\n```\n",
+        encoding="utf-8",
+    )
+
+    problems = check_links.check_document(doc)
+
+    assert any("missing-prose-target.md" in p for p in problems)
+    assert not any("ignored-target.md" in p for p in problems)
+
+
+def test_link_checker_shorter_fence_does_not_close_block(tmp_path: Path) -> None:
+    doc = tmp_path / "doc.md"
+    doc.write_text(
+        "````\n```\n[in-code](ignored-target.md)\n````\n\n[prose](missing-prose-target.md)\n",
+        encoding="utf-8",
+    )
+
+    problems = check_links.check_document(doc)
+
+    assert any("missing-prose-target.md" in p for p in problems)
+    assert not any("ignored-target.md" in p for p in problems)
+
+
 def test_readme_keeps_upstream_english_product_contract() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
