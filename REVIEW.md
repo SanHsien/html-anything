@@ -149,6 +149,19 @@ Open PR 抽樣：#144（draft）、#142、#139、#135、#134、#133、#132、#13
 | R-19 | CodeQL 不完整 stripTags／屬性跳脫 | 迴圈剝標、`escapeAttr`；測試 fakeFetch 改比 hostname |
 | R-20 | CodeQL `js/incorrect-suffix-check` | `parsePackageId` 顯式處理 `indexOf === -1` |
 
+2026-11-20 增量審查（`e40e5fb..688c488`）：
+
+| ID | 項目 | 狀態 |
+|---|---|---|
+| C-1 | Windows GNU tar（Git for Windows）把 `-C <destDir>` 的反斜線當跳脫字元，TEMP 含 `\tom`、`\tmp` 等段時 marketplace 安裝失敗 | 已修 `de98b8c`（2026-11-20）：tar 以 `cwd = destDir` 執行，只收相對、正斜線的 `../archive.tar.gz`，不再傳 `-C`；GNU tar 與 System32 bsdtar 都實測通過 |
+| C-2 | `install-drive-path.test.ts` 在 bsdtar 與 Ubuntu 上擋不住回歸 | 已修 `de98b8c`（2026-11-20）：新增「spawn 給 tar 的參數不得有絕對路徑／反斜線／磁碟代號」測試（各平台都跑），以及有 Git for Windows GNU tar 時「GNU tar 放 PATH 最前、TEMP 含 `tom`/`tmp` 段」的安裝測試；兩者在修正前的程式碼都失敗 |
+| N-1 | openclaw agent-id 探測期間取消，agent 仍被 spawn 並無人讀取 | 已修 `60cd739`（2026-11-20）：spawn 前檢查 `signal.aborted`；`invoke-lifecycle.test.ts` 兩筆測試在修正前失敗 |
+| H-1 | WeChat 匯出在第二個同源 iframe 重跑產生的 HTML | 未修：屬已接受的預覽 iframe 信任模型；改動會牽動匯出所需的執行期樣式 |
+| H-2 | `fonts.ready` 沒有逾時，字型 CDN 卡住時複製無回應 | 已修 `a38ddd6`（2026-11-20）：與 iframe load 同樣 8 秒上限；`image.ts` 同型問題一併加 6 秒上限。jsdom 無 FontFaceSet，未加專屬單元測試 |
+| H-3 | Windows `taskkill` 同步阻塞 event loop、失敗不退回 `child.kill()` | 未修：改成非同步會改變取消時序，需要以真實行程樹測試驗證，本輪只記錄；已列入 `ROADMAP.md` 近期 |
+| H-4 | Codex stderr 緩衝無上限 | 已修 `60cd739`（2026-11-20）：超過 64 KiB 就分段送出；被截斷的那行若含 model-refresh 診斷，仍遮蔽並丟棄該行其餘內容，避免 body 從後段外洩；測試在修正前失敗 |
+| H-5 | `check_links.py` 把帶 info string 的 fence 當收尾，造成配對錯位、跳過正文連結 | 已修 `0552590`（2026-11-20）：收尾 fence 不得帶 info string，配對不再錯位；pytest 在修正前失敗。真正沒閉合的 fence 仍會吃到下一個裸 fence，維持 `ROADMAP.md`「刻意不做」 |
+
 ## 接受不改
 
 - 不把產品 README 翻成繁中主檔，也不改 README 的「75 skills / 9 CLIs」行銷數字（實測 81 個 skill 目錄、`detect.ts` 約 20 個 adapter）。那是上游產品契約。

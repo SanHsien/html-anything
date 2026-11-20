@@ -9,6 +9,7 @@
 ## 近期：可以直接動手
 | 項目 | 為什麼 | 驗收方式 | 建議執行者 | 證據 |
 | --- | --- | --- | --- | --- |
+| Windows `killProcessTree` 改非同步 `taskkill`，失敗時退回 `child.kill()` | 同步 `spawnSync` 最多卡住 Next server event loop 5 秒；taskkill 失敗時 cmd 殼的子孫行程會殘留（REVIEW.md H-3） | `invoke-abort.test.ts` 的孫行程終止測試仍綠，並新增 taskkill 失敗時改呼叫 `child.kill()` 的測試；`pnpm -F @html-anything/next test` 綠 | Claude Sonnet | `next/src/lib/agents/invoke.ts` `killProcessTree` |
 
 ## 中期：等條件成立再做
 | 項目 | 觸發條件 | 驗收方式 | 建議執行者 | 證據 |
@@ -20,10 +21,10 @@
 ## 刻意不做
 | 不做什麼 | 理由 | 什麼情況下重新考慮 |
 | --- | --- | --- |
-| 補強 `tools/check_links.py` 的剩餘小缺口（未閉合 fence、雙反引號行內碼） | 深掃報告（2026-10-26）列為審查員備註：只會少檢查、不會誤報 | 文件出現這些寫法 |
+| 補強 `tools/check_links.py` 的剩餘小缺口（真正未閉合的 fence、雙反引號行內碼；帶 info string 的收尾誤配已於 `0552590` 修掉） | 深掃報告（2026-10-26）列為審查員備註：只會少檢查、不會誤報 | 文件出現這些寫法 |
 | 僅為新鮮度提高 `requirements-dev.txt` 的 pytest 9.1 下限 | 保留已驗證的相容範圍；9.1.0 與現行 9.2.0 均通過 fork gate，以 `freshness-hold` 記錄政策，仍允許安裝新版 | 測試開始使用 pytest 9.2 以上專屬 API 或設定時 |
 | 把 `requirements-dev.txt` 的 ruff 下限從 0.16 提高 | 程式不需要 0.17；`ruff check --select E9,F tools tests` 在 0.16.10 與 0.17.2 皆通過，已以 `freshness-hold` 標註（`requirements-dev.txt:2`、`docs/fork/DECISIONS.md:216`） | 程式需要只有 ruff 0.17 以上才有的規則或設定 |
 
 ## 維護方式
 - 每週由 `Upstream check` 排程檢查上游；轉 failure 或有新 commit 時人工審查再移植。
-- 程式變更須通過 `next/` 下的 `npm test`（vitest）、`npm run typecheck`（tsc）與根目錄 `pytest`；skills 的 tar 解包與測試夾具已改成不把 `C:` 路徑交給 GNU tar，Git Bash 與 PowerShell 都能跑（見 `docs/fork/DECISIONS.md` 2026-11-10 上游審查段）。
+- 程式變更須通過 `next/` 下的 `npm test`（vitest）、`npm run typecheck`（tsc）與根目錄 `pytest`；skills 的 tar 解包只把相對、正斜線路徑交給 tar（不再傳絕對 `-C`），GNU tar 與 bsdtar 都能跑，TEMP 含 `	om` 這類段也不受影響（REVIEW.md C-1），Git Bash 與 PowerShell 都能跑（見 `docs/fork/DECISIONS.md` 2026-11-10 上游審查段）。
