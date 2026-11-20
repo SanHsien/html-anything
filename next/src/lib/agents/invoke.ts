@@ -92,6 +92,8 @@ export type InvokeEvent =
  * this size instead of growing without bound until the process exits.
  */
 export const STDERR_FLUSH_BYTES = 64 * 1024;
+/** Longer than any stderr redaction marker (see argv.ts). */
+const STDERR_REDACTION_LOOKAHEAD = 256;
 
 export function killProcessTree(child: Pick<ChildProcessWithoutNullStreams, "pid" | "kill" | "exitCode" | "signalCode">): void {
   // A finished child's PID may already belong to another process; /F /T would hit that tree.
@@ -304,12 +306,17 @@ export function invokeAgent(opts: InvokeOpts): ReadableStream<InvokeEvent> {
             text: `${sanitizeAgentStderrLine(opts.agent, line)}\n`,
           });
         }
-        while (stderrBuf.length > STDERR_FLUSH_BYTES) {
+        // Keep STDERR_REDACTION_LOOKAHEAD chars past each cut so a diagnostic
+        // that straddles the cut is still seen whole in the look-ahead window.
+        // The body always follows the diagnostic, so emitting the text before
+        // the cut is safe as long as the rest of that line is then dropped.
+        while (stderrBuf.length > STDERR_FLUSH_BYTES + STDERR_REDACTION_LOOKAHEAD) {
+          const window = stderrBuf.slice(0, STDERR_FLUSH_BYTES + STDERR_REDACTION_LOOKAHEAD);
           const part = stderrBuf.slice(0, STDERR_FLUSH_BYTES);
           stderrBuf = stderrBuf.slice(STDERR_FLUSH_BYTES);
           if (dropRestOfStderrLine) continue;
           safeEnqueue({ type: "stderr", text: sanitizeAgentStderrLine(opts.agent, part) });
-          if (agentStderrLineNeedsRedaction(opts.agent, part)) dropRestOfStderrLine = true;
+          if (agentStderrLineNeedsRedaction(opts.agent, window)) dropRestOfStderrLine = true;
         }
       });
 

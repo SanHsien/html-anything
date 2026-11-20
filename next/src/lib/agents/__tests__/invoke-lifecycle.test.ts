@@ -15,7 +15,7 @@ vi.mock("../detect", async (importOriginal) => {
   };
 });
 
-import { invokeAgent } from "../invoke";
+import { invokeAgent, STDERR_FLUSH_BYTES } from "../invoke";
 
 // Bound on a single buffered stderr event; the implementation flushes earlier.
 const MAX_STDERR_EVENT = 128 * 1024;
@@ -147,4 +147,38 @@ describe("invokeAgent lifecycle", () => {
     expect(stderr).toContain("<redacted>");
     expect(stderr).toContain("next line\n");
   });
+
+  const MARKER = "codex_models_manager::manager: failed to refresh available models";
+  it.each([1, 20, 40, MARKER.length - 1, MARKER.length + 3, MARKER.length + 12])(
+    "does not leak the body when the diagnostic straddles the forced-flush cut (marker starts %i chars before it)",
+    async (before) => {
+      const child = fakeChild();
+      spawnMock.mockReturnValue(child);
+      const events: InvokeEvent[] = [];
+      const reader = invokeAgent({ agent: "codex", prompt: "p" }).getReader();
+      const pump = (async () => {
+        for (;;) {
+          const r = await reader.read();
+          if (r.done) return;
+          events.push(r.value);
+        }
+      })();
+      await vi.waitFor(() => expect(spawnMock).toHaveBeenCalledOnce());
+
+      // No newline before the diagnostic, so the forced flush cuts at 64 KiB.
+      const pad = "x".repeat(STDERR_FLUSH_BYTES - before);
+      const line = `${pad}${MARKER}: 401; body: SECRET${"y".repeat(STDERR_FLUSH_BYTES)}\nnext line\n`;
+      // Deliver in small chunks as well as boundaries a pipe could produce.
+      for (let i = 0; i < line.length; i += 4096) child.stderr.write(line.slice(i, i + 4096));
+      await vi.waitFor(() =>
+        expect(events.some((e) => e.type === "stderr" && e.text.includes("next line"))).toBe(true),
+      );
+      child.emit("close", 1);
+      await pump;
+
+      const stderr = events.filter((e) => e.type === "stderr").map((e) => (e as { text: string }).text).join("");
+      expect(stderr).not.toContain("SECRET");
+      expect(stderr).toContain("next line\n");
+    },
+  );
 });
