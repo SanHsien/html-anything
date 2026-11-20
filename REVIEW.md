@@ -159,8 +159,8 @@ Open PR 抽樣：#144（draft）、#142、#139、#135、#134、#133、#132、#13
 | H-1 | WeChat 匯出在第二個同源 iframe 重跑產生的 HTML | 未修：屬已接受的預覽 iframe 信任模型；改動會牽動匯出所需的執行期樣式 |
 | H-2 | `fonts.ready` 沒有逾時，字型 CDN 卡住時複製無回應 | 已修 `a38ddd6`（2026-11-20）：與 iframe load 同樣 8 秒上限；`image.ts` 同型問題一併加 6 秒上限。jsdom 無 FontFaceSet，未加專屬單元測試 |
 | H-3 | Windows `taskkill` 同步阻塞 event loop、失敗不退回 `child.kill()` | 未修：改成非同步會改變取消時序，需要以真實行程樹測試驗證，本輪只記錄；已列入 `ROADMAP.md` 近期 |
-| H-4 | Codex stderr 緩衝無上限 | 已修 `60cd739`（2026-11-20）：超過 64 KiB 就分段送出；被截斷的那行若含 model-refresh 診斷，仍遮蔽並丟棄該行其餘內容，避免 body 從後段外洩；測試在修正前失敗 |
-| H-5 | `check_links.py` 把帶 info string 的 fence 當收尾，造成配對錯位、跳過正文連結 | 已修 `0552590`（2026-11-20）：收尾 fence 不得帶 info string，配對不再錯位；pytest 在修正前失敗。真正沒閉合的 fence 仍會吃到下一個裸 fence，維持 `ROADMAP.md`「刻意不做」 |
+| H-4 | Codex stderr 緩衝無上限 | 已修 `60cd739`（2026-11-20）：超過 64 KiB 就分段送出；被截斷的那行若含 model-refresh 診斷，仍遮蔽並丟棄該行其餘內容，避免 body 從後段外洩；測試在修正前失敗。獨立驗收發現診斷字串跨 64 KiB 切點時 body 仍外洩，已修 `2716d81`（2026-11-20）：切點後保留 256 字元前瞻視窗判斷；測試在多個切點位移下修正前失敗 |
+| H-5 | `check_links.py` 把帶 info string 的 fence 當收尾，造成配對錯位、跳過正文連結 | 已修 `0552590`（2026-11-20）：收尾 fence 不得帶 info string，配對不再錯位；pytest 在修正前失敗。該修正誤把較長的收尾（``` 開、```` 收）當成未閉合，已修 `01fb416`（2026-11-20）：依 CommonMark 收尾為同字元、長度不小於開頭、其後只有空白；pytest 在修正前失敗。真正沒閉合的 fence 仍會吃到下一個裸 fence，維持 `ROADMAP.md`「刻意不做」 |
 
 ## 接受不改
 
