@@ -160,7 +160,11 @@ function waitForIframeLoad(iframe: HTMLIFrameElement): Promise<void> {
 async function waitForDocumentReady(doc: Document): Promise<void> {
   try {
     const fonts = (doc as Document & { fonts?: FontFaceSet }).fonts;
-    if (fonts?.ready) await fonts.ready;
+    // Same bound as the iframe load wait: a stalled font CDN must not leave
+    // the clipboard promise pending forever.
+    if (fonts?.ready) {
+      await Promise.race([fonts.ready, new Promise<void>((resolve) => window.setTimeout(resolve, 8000))]);
+    }
   } catch {
     // Font loading is best effort; computed styles are still useful without it.
   }

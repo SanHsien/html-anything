@@ -68,7 +68,10 @@ async function waitForDocumentReady(doc: Document, win: Window): Promise<void> {
 
   try {
     const fonts = (doc as Document & { fonts?: FontFaceSet }).fonts;
-    if (fonts?.ready) await fonts.ready;
+    // A stalled font CDN must not hang the export; fonts are best effort.
+    if (fonts?.ready) {
+      await Promise.race([fonts.ready, new Promise<void>((res) => setTimeout(res, 6000))]);
+    }
   } catch {
     /* noop */
   }
