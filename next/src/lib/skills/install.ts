@@ -243,14 +243,22 @@ async function extractTarball(tarPath: string, destDir: string): Promise<void> {
   await new Promise<void>((resolve, reject) => {
     // `--strip-components=1` drops the `<repo>-<sha>/` wrapper directory
     // GitHub adds. `--no-same-owner` keeps perms sane on shared boxes.
-    // The archive operand is passed as a bare file name with `cwd` set to its
-    // directory: GNU tar (Git for Windows) reads a leading `C:` in `-f` as a
-    // remote `host:path` and fails with "Cannot connect to C: resolve failed".
-    // `--force-local` is not an option because bsdtar rejects it.
+    //
+    // tar runs with `cwd` = destDir and gets only a relative, forward-slash
+    // archive operand (no `-C`). Absolute Windows paths break GNU tar (Git for
+    // Windows) twice over: a leading `C:` is read as a remote `host:path`, and
+    // backslashes are unquoted as escapes, so a segment like `\tom` or `\tmp`
+    // becomes a TAB. `--force-local` is not an option because bsdtar rejects
+    // it. Both tars accept a relative `../archive.tar.gz`.
+    const archiveOperand = path.relative(destDir, tarPath).split(path.sep).join("/");
+    if (!archiveOperand || path.isAbsolute(archiveOperand) || /^[A-Za-z]:/.test(archiveOperand)) {
+      reject(new InstallError("tar_failed", "archive and extract dir must share a volume"));
+      return;
+    }
     const proc = spawn(
       "tar",
-      ["-xzf", path.basename(tarPath), "-C", destDir, "--strip-components=1", "--no-same-owner"],
-      { cwd: path.dirname(tarPath), stdio: ["ignore", "ignore", "pipe"] },
+      ["-xzf", archiveOperand, "--strip-components=1", "--no-same-owner"],
+      { cwd: destDir, stdio: ["ignore", "ignore", "pipe"] },
     );
     let stderr = "";
     proc.stderr.on("data", (chunk) => {
