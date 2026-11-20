@@ -18,7 +18,8 @@ ROOT = Path(__file__).resolve().parent.parent
 LINK_PATTERN = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
 IMAGE_PATTERN = re.compile(r"!\[[^\]]*\]\(([^)]+)\)")
 HTML_SRC_PATTERN = re.compile(r"""(?is)<img[^>]+src=["']([^"']+)["']""")
-FENCE_PATTERN = re.compile(r"(?ms)^[ \t]*(```|~~~).*?^[ \t]*\1[^\n]*$")
+# A closing fence carries no info string (CommonMark); ```py inside a block is content.
+FENCE_PATTERN = re.compile(r"(?ms)^[ \t]*(```|~~~).*?^[ \t]*\1[ \t]*$")
 INLINE_CODE_PATTERN = re.compile(r"`[^`\n]*`")
 # `(target "title")`: a destination, optionally followed by a quoted title.
 TITLE_SUFFIX = re.compile(r"""\s+(?:"[^"]*"|'[^']*'|\([^)]*\))\s*$""")

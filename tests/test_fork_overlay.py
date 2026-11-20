@@ -108,6 +108,21 @@ def test_overlay_markdown_links_resolve() -> None:
     assert failures == 0
 
 
+def test_link_checker_does_not_treat_info_string_fence_as_closing(tmp_path: Path) -> None:
+    # A line like ```py inside a fence is content, not a closing fence. If the
+    # stripper closed on it, the pairing shifts and the prose link between the
+    # two real blocks is swallowed as "code" and never checked.
+    doc = tmp_path / "doc.md"
+    doc.write_text(
+        "```\na\n```py\nb\n```\n\n[prose](missing-prose-target.md)\n\n```\nc\n```\n",
+        encoding="utf-8",
+    )
+
+    problems = check_links.check_document(doc)
+
+    assert any("missing-prose-target.md" in p for p in problems)
+
+
 def test_readme_keeps_upstream_english_product_contract() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
