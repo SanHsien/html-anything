@@ -160,7 +160,8 @@ Open PR 抽樣：#144（draft）、#142、#139、#135、#134、#133、#132、#13
 | H-2 | `fonts.ready` 沒有逾時，字型 CDN 卡住時複製無回應 | 已修 `a38ddd6`（2026-11-20）：與 iframe load 同樣 8 秒上限；`image.ts` 同型問題一併加 6 秒上限。jsdom 無 FontFaceSet，未加專屬單元測試 |
 | H-3 | Windows `taskkill` 同步阻塞 event loop、失敗不退回 `child.kill()` | 未修：改成非同步會改變取消時序，需要以真實行程樹測試驗證，本輪只記錄；已列入 `ROADMAP.md` 近期 |
 | H-4 | Codex stderr 緩衝無上限 | 已修 `60cd739`（2026-11-20）：超過 64 KiB 就分段送出；被截斷的那行若含 model-refresh 診斷，仍遮蔽並丟棄該行其餘內容，避免 body 從後段外洩；測試在修正前失敗。獨立驗收發現診斷字串跨 64 KiB 切點時 body 仍外洩，已修 `2716d81`（2026-11-20）：切點後保留 256 字元前瞻視窗判斷；測試在多個切點位移下修正前失敗 |
-| H-5 | `check_links.py` 把帶 info string 的 fence 當收尾，造成配對錯位、跳過正文連結 | 已修 `0552590`（2026-11-20）：收尾 fence 不得帶 info string，配對不再錯位；pytest 在修正前失敗。該修正誤把較長的收尾（``` 開、```` 收）當成未閉合，已修 `01fb416`（2026-11-20）：依 CommonMark 收尾為同字元、長度不小於開頭、其後只有空白；pytest 在修正前失敗。真正沒閉合的 fence 仍會吃到下一個裸 fence，維持 `ROADMAP.md`「刻意不做」 |
+| H-5 | `check_links.py` 把帶 info string 的 fence 當收尾，造成配對錯位、跳過正文連結 | 已修 `0552590`（2026-11-20）：收尾 fence 不得帶 info string，配對不再錯位；pytest 在修正前失敗。該修正誤把較長的收尾（``` 開、```` 收）當成未閉合，已修 `01fb416`（2026-11-20）：依 CommonMark 收尾為同字元、長度不小於開頭、其後只有空白；pytest 在修正前失敗。真正沒閉合的 fence 由 H-6 收掉 |
+| H-6 | `check_links.py` 以 regex 剝除程式碼，仍有假綠：孤立反引號跨 blockquote 分段、ATX 標題、HTML 區塊／註解、以標題開頭的 list item 或 GFM 表格儲存格配對；`` \` `` 被當 code span 分隔；縮排 ```` ``` ````、list item 內的 fence、`>` 後接 tab 的 fence 被誤判。另有 ROADMAP「刻意不做」的兩個缺口（真正未閉合的 fence、雙反引號行內碼） | 已修 `31d2d4e`（2026-11-21）：改用 markdown-it-py 4.2.0（CommonMark＋GFM 表格，精確釘版於 `requirements-dev.txt`，`dev_check` 先安裝）解析，只檢查 link／image token 與 HTML token 內的 `<img src>`；程式碼由 parser 排除。fence 的原始範圍沒結束在收尾行就回報「沒有收尾」。`test_code_detection_does_not_hide_a_real_link`  11 例中 4 例、`test_unclosed_fence_fails_instead_of_hiding_the_rest`、`test_code_in_blockquotes_and_spans_is_still_not_a_link` 在原版失敗；另 7 例原版本來就通過，留作回歸防線。真實文件比對：舊版檢查過的目標一個不少，0 斷連結。ROADMAP 對應列已刪。 |
 
 ## 接受不改
 
