@@ -10,13 +10,13 @@
 | 項目 | 為什麼 | 驗收方式 | 建議執行者 | 證據 |
 | --- | --- | --- | --- | --- |
 | Windows `killProcessTree` 改非同步 `taskkill`，失敗時退回 `child.kill()` | 同步 `spawnSync` 最多卡住 Next server event loop 5 秒；taskkill 失敗時 cmd 殼的子孫行程會殘留（REVIEW.md H-3） | `invoke-abort.test.ts` 的孫行程終止測試仍綠，並新增 taskkill 失敗時改呼叫 `child.kill()` 的測試；`pnpm -F @html-anything/next test` 綠 | Claude Sonnet | `next/src/lib/agents/invoke.ts` `killProcessTree` |
+| 同步上游新提交與 UI 模板改進 | 觸發條件已成立（2026-11-21 查：`python tools/check_upstream_updates.py --strict` exit 1：baseline `975fb3b` 後 644 個 commit）。原條件：`Upstream check` workflow 轉為 failure（上游有未審項目）或上游 main 有新 commit | 執行 `python tools/check_upstream_updates.py`，逐檔比對 `next/src/lib/` 分歧檔後更新 `tools/upstream_baseline.json` 與 `docs/fork/DECISIONS.md`；`Upstream check` 與 CI 綠 | Codex | `tools/upstream_baseline.json`；`tools/check_upstream_updates.py` |
+| 採用上游 PR #149（Codex 生命週期）、#153（重複 payload 只發一次 delta）、#159（use-convert 批次 SSE，記憶體耗盡） | 觸發條件已成立（2026-11-21 查：#149 已於 2026-10-13 合併；#153、#159 於 2026-11-16 關閉未合併，原條件對這兩筆不會再成立，要重新裁決）。原條件：上游合併後隨 commit 軸抵達 | 逐檔比對無衝突後移植；`next/` 下 `npm test` 與 `npm run typecheck` 綠，並做 UI 驗證；`docs/fork/DECISIONS.md` 更新 | Claude Sonnet | `docs/fork/DECISIONS.md:152` |
+| 評估上游 PR #162（MiniMax 模型清單） | 觸發條件已成立（2026-11-21 查：#162 於 2026-11-16 關閉未合併，原條件不會再成立，要重新裁決）。原條件：上游合併後經 commit 軸抵達 | 逐檔對照後決定採用與否：其 `minimax-invoke.test.ts` 用 `vi.mock('node:child_process')`，本 fork 走 `cross-spawn`，不能照抄；`npm test` 與 `npm run typecheck` 綠；`docs/fork/DECISIONS.md` 更新 | Claude Sonnet | `docs/fork/DECISIONS.md:211` |
 
 ## 中期：等條件成立再做
 | 項目 | 觸發條件 | 驗收方式 | 建議執行者 | 證據 |
 | --- | --- | --- | --- | --- |
-| 同步上游新提交與 UI 模板改進 | `Upstream check` workflow 轉為 failure（上游有未審項目）或上游 main 有新 commit | 執行 `python tools/check_upstream_updates.py`，逐檔比對 `next/src/lib/` 分歧檔後更新 `tools/upstream_baseline.json` 與 `docs/fork/DECISIONS.md`；`Upstream check` 與 CI 綠 | Codex | `tools/upstream_baseline.json`；`tools/check_upstream_updates.py` |
-| 採用上游 PR #149（Codex 生命週期）、#153（重複 payload 只發一次 delta）、#159（use-convert 批次 SSE，記憶體耗盡） | 上游合併後隨 commit 軸抵達 | 逐檔比對無衝突後移植；`next/` 下 `npm test` 與 `npm run typecheck` 綠，並做 UI 驗證；`docs/fork/DECISIONS.md` 更新 | Claude Sonnet | `docs/fork/DECISIONS.md:152` |
-| 評估上游 PR #162（MiniMax 模型清單） | 上游合併後經 commit 軸抵達 | 逐檔對照後決定採用與否：其 `minimax-invoke.test.ts` 用 `vi.mock('node:child_process')`，本 fork 走 `cross-spawn`，不能照抄；`npm test` 與 `npm run typecheck` 綠；`docs/fork/DECISIONS.md` 更新 | Claude Sonnet | `docs/fork/DECISIONS.md:211` |
 
 ## 刻意不做
 | 不做什麼 | 理由 | 什麼情況下重新考慮 |
