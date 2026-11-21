@@ -49,10 +49,12 @@ def test_a_held_floor_is_reported_but_does_not_ask_for_work(
     assert "REVIEW UPDATE" not in report
 
 
-def test_requirements_dev_declares_pytest_and_ruff() -> None:
+def test_requirements_dev_declares_the_gate_tools() -> None:
     packages = checker.load_direct_dependencies()
     names = {package["name"] for package in packages}
-    assert names == {"pytest", "ruff"}
+    assert names == {"pytest", "ruff", "markdown-it-py"}
     by_name = {package["name"]: package for package in packages}
     assert by_name["pytest"]["minimum"] == "9.1"
     assert by_name["pytest"]["requirement"] == "pytest>=9.1"
+    # check_links.py's parse must not drift between machines: an exact pin.
+    assert by_name["markdown-it-py"]["requirement"] == "markdown-it-py==4.2.0"

@@ -11,17 +11,15 @@ from __future__ import annotations
 
 import re
 import sys
+from collections.abc import Iterator
 from pathlib import Path
 from urllib.parse import unquote
 
+from markdown_it import MarkdownIt
+from markdown_it.token import Token
+
 ROOT = Path(__file__).resolve().parent.parent
-LINK_PATTERN = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
-IMAGE_PATTERN = re.compile(r"!\[[^\]]*\]\(([^)]+)\)")
 HTML_SRC_PATTERN = re.compile(r"""(?is)<img[^>]+src=["']([^"']+)["']""")
-# CommonMark: the closer repeats the opener's character at least as many times
-# and carries no info string, so ```py inside a block is content.
-FENCE_PATTERN = re.compile(r"(?ms)^[ \t]*(([`~])\2{2,}).*?^[ \t]*\1\2*[ \t]*$")
-INLINE_CODE_PATTERN = re.compile(r"`[^`\n]*`")
 # `(target "title")`: a destination, optionally followed by a quoted title.
 TITLE_SUFFIX = re.compile(r"""\s+(?:"[^"]*"|'[^']*'|\([^)]*\))\s*$""")
 SKIP_PREFIXES = ("http://", "https://", "mailto:", "tel:", "#")
@@ -72,16 +70,75 @@ def _missing_relative(path: Path, target: str) -> str | None:
     return f"{target} → 找不到 {shown}"
 
 
+# Read Markdown with a real CommonMark + GFM table parser, the way GitHub
+# renders it. Hand-written regexes for code spans and fences kept hiding real
+# links (HTML blocks, tables, list items opening with a heading, tabs after ">"),
+# so the parser decides what is code; links quoted in code are never tokens.
+MARKDOWN = MarkdownIt("commonmark", {"html": True}).enable("table")
+FENCE_CLOSE = re.compile(r"[ \t>]*(?P<fence>`{3,}|~{3,})[ \t]*$")
+
+
+def _walk(tokens: list[Token]) -> Iterator[Token]:
+    for token in tokens:
+        yield token
+        if token.children:
+            yield from _walk(token.children)
+
+
+def _fence_is_closed(token: Token, lines: list[str]) -> bool:
+    """A closed fence's source range ends on its closing line."""
+    start, end = token.map or (0, 0)
+    if end - start < 2 or end > len(lines):
+        return False
+    closer = FENCE_CLOSE.match(lines[end - 1])
+    return bool(
+        closer
+        and closer.group("fence")[0] == token.markup[0]
+        and len(closer.group("fence")) >= len(token.markup)
+    )
+
+
+def extract_targets(text: str) -> tuple[list[tuple[str, bool]], int | None]:
+    """Return the link targets of a document and the line of an unclosed fence.
+
+    Each target is (destination, is_markdown): Markdown links and images carry a
+    parsed destination (titles already removed), an HTML <img src> is the raw
+    attribute. CommonMark runs an unclosed fence to the end of its container and
+    hides every link after it; that is almost always a typo, so the caller
+    reports it instead of passing silently.
+    """
+    lines = text.splitlines()
+    targets: list[tuple[str, bool]] = []
+    unclosed: int | None = None
+    for token in _walk(MARKDOWN.parse(text)):
+        if token.type == "link_open":
+            targets.append((str(token.attrGet("href") or ""), True))
+        elif token.type == "image":
+            targets.append((str(token.attrGet("src") or ""), True))
+        elif token.type in ("html_block", "html_inline"):
+            targets.extend(
+                (match.group(1), False)
+                for match in HTML_SRC_PATTERN.finditer(token.content)
+            )
+        elif (
+            token.type == "fence"
+            and unclosed is None
+            and not _fence_is_closed(token, lines)
+        ):
+            unclosed = (token.map or (0, 0))[0] + 1
+    return targets, unclosed
+
+
 def check_document(path: Path) -> list[str]:
     problems: list[str] = []
-    text = path.read_text(encoding="utf-8")
     # Links shown as examples inside code are not links of this document.
-    text = INLINE_CODE_PATTERN.sub("", FENCE_PATTERN.sub("", text))
-    for pattern in (LINK_PATTERN, IMAGE_PATTERN, HTML_SRC_PATTERN):
-        for match in pattern.finditer(text):
-            missing = _missing_relative(path, match.group(1))
-            if missing:
-                problems.append(missing)
+    targets, unclosed = extract_targets(path.read_text(encoding="utf-8"))
+    if unclosed is not None:
+        problems.append(f"第 {unclosed} 行的 code fence 沒有收尾，之後的連結都不會被檢查")
+    for target, _ in targets:
+        missing = _missing_relative(path, target)
+        if missing:
+            problems.append(missing)
     return problems
 
 

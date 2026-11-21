@@ -1,2 +1,3 @@
 pytest>=9.1  # freshness-hold: preserve the supported 9.1 floor; the fork gate needs no pytest 9.2 features; re-evaluate when tests require newer APIs
 ruff>=0.16  # freshness-hold: ruff 0.17 adds nothing this repo needs; E9,F lint passes on 0.16.10 and 0.17.2
+markdown-it-py==4.2.0  # freshness-hold: exact pin so tools/check_links.py parses Markdown the same way locally and in CI; upgrades arrive as Dependabot PRs that run the link gate
